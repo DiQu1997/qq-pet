@@ -2,7 +2,7 @@
 
 腾讯 QQ 宠物(2005–2018)的单机桌面复刻,个人学习与怀旧用途,严禁商用。
 企鹅素材来自 [QQpet-codex](https://github.com/chenboos5/QQpet-codex)(官方 QGG SWF 转 PNG),
-数值考证见 `Personal Coach/deep_research/qq宠物1比1复刻功能规格.md`,
+数值考证见 [docs/qq宠物1比1复刻功能规格.md](docs/qq宠物1比1复刻功能规格.md),
 行为对照参考 [qqpet_automation](https://github.com/xuemian168/qqpet_automation)(怀旧服 v1.2.4 逆向)。
 
 ## 运行
