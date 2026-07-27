@@ -19,12 +19,43 @@ npm test
 npm run typecheck
 ```
 
+## 已知问题 · macOS 启动失败(Electron 被内核 SIGKILL)
+
+**症状**:`npm start` 或直接跑 Electron 立刻退出,报
+`Electron exited with signal SIGKILL`,连 `Electron --version` 都是 exit 137;
+`codesign --verify` 报 `resource fork, Finder information, or similar detritus not allowed`。
+
+**原因**:项目放在 **iCloud 同步范围内的目录**(`~/Desktop`、`~/Documents` 默认都在),
+iCloud 会持续给文件写扩展属性(`com.apple.FinderInfo`、`com.apple.provenance` 等),
+破坏 `Electron.app` 的 ad-hoc 签名 → macOS 内核直接杀进程。
+在原地 `xattr -c` + 重新签名**无效**,因为 iCloud 会立刻再写回去。
+
+**解法**:把 Electron 运行时复制到不受同步影响的目录、剥掉扩展属性、重新 ad-hoc 签名,
+之后从那个副本启动(项目源码留在原地不用动):
+
+```bash
+RT="$HOME/Library/Application Support/qq-pet-runtime" && rm -rf "$RT" && mkdir -p "$RT" && ditto --noextattr --norsrc node_modules/electron/dist/Electron.app "$RT/Electron.app" && codesign --force --deep --sign - "$RT/Electron.app" && codesign --verify --deep --strict "$RT/Electron.app" && echo OK
+```
+
+之后的启动命令(替代 `npm start`):
+
+```bash
+npm run build && open -n "$HOME/Library/Application Support/qq-pet-runtime/Electron.app" --args "$PWD"
+```
+
+每次 `npm install` 重装 Electron 后需要重跑一次上面的复制+签名。
+**根治办法**:把项目移出 iCloud 同步目录(例如 `~/dev/qq-pet`),或给 `node_modules`
+加 `.nosync` 后缀排除同步 —— 之后 `npm start` 就能正常用了。
+
+排障日志在 `~/Library/Application Support/qq-pet/main.log`(记录启动、未捕获异常、存档失败)。
+
 ## 架构
 
 - `config.json` — 全部游戏数值(衰减、成长表、等级表、商品、气泡台词),改数值不用碰代码
 - `src/core/` — 纯逻辑引擎(不依赖 Electron,vitest 可测):属性衰减、心情→成长、等级、喂食洗澡、经济
 - `src/main/` — Electron 主进程:桌宠窗口、行为状态机(散步/拖拽/坠落/贴边躲藏)、托盘、右键菜单、存档
-- `src/renderer/` — 渲染:精灵动画 + 气泡(`renderer.ts`)、状态面板(`panel.ts`)
+- `src/renderer/` — 四个窗口:桌宠精灵动画+气泡(`renderer.ts`)、企鹅岛社区(`community.ts`,11 个标签页)、古堡战记(`battle.ts`)、密室探险(`maze.ts`)
+- `assets/sprites.json` — 精灵图动画表(行号/帧数/帧率/是否循环),换素材只改这里
 - 存档:`~/Library/Application Support/qq-pet/save.json`;退出期间不成长也不会死(与原版一致)
 
 ## 已实现(M0~M7 全部落地)
