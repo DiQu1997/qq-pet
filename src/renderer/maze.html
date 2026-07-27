@@ -1,0 +1,45 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      html, body {
+        margin: 0;
+        font-family: "PingFang SC", sans-serif;
+        background: #17212b;
+        color: #e8eef4;
+        user-select: none;
+        -webkit-user-select: none;
+        overflow: hidden;
+      }
+      .titlebar {
+        -webkit-app-region: drag;
+        background: #0f161d;
+        color: #7fc8f8;
+        padding: 10px 14px;
+        font-weight: 600;
+        display: flex;
+        justify-content: space-between;
+      }
+      .titlebar button {
+        -webkit-app-region: no-drag;
+        border: none;
+        background: rgba(255,255,255,0.15);
+        color: #fff;
+        border-radius: 50%;
+        width: 22px; height: 22px;
+        cursor: pointer;
+      }
+      #hud { text-align: center; padding: 8px; font-size: 13px; }
+      canvas { display: block; margin: 0 auto; background: #0f161d; border-radius: 8px; }
+      #tip { text-align: center; font-size: 12px; color: #8aa0b4; padding: 8px; }
+    </style>
+  </head>
+  <body>
+    <div class="titlebar"><span>🚪 密室探险</span><button id="close">×</button></div>
+    <div id="hud">⏱️ <span id="timer">--</span> 秒 · 方向键移动,走到出口 🚪</div>
+    <canvas id="maze" width="440" height="330"></canvas>
+    <div id="tip">教堂地下的密室……据说尽头藏着日用品和好吃的</div>
+    <script src="maze.js"></script>
+  </body>
+</html>

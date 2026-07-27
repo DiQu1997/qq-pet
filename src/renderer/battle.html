@@ -1,0 +1,95 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      html, body {
+        margin: 0;
+        font-family: "PingFang SC", sans-serif;
+        background: #2b2038;
+        color: #f0e6d2;
+        user-select: none;
+        -webkit-user-select: none;
+        overflow: hidden;
+      }
+      .titlebar {
+        -webkit-app-region: drag;
+        background: #1d1528;
+        color: #d4b46a;
+        padding: 10px 14px;
+        font-weight: 600;
+        display: flex;
+        justify-content: space-between;
+      }
+      .titlebar button {
+        -webkit-app-region: no-drag;
+        border: none;
+        background: rgba(255,255,255,0.15);
+        color: #fff;
+        border-radius: 50%;
+        width: 22px; height: 22px;
+        cursor: pointer;
+      }
+      .arena {
+        display: flex;
+        justify-content: space-around;
+        align-items: flex-end;
+        padding: 26px 20px 10px;
+        height: 190px;
+      }
+      .fighter { text-align: center; width: 180px; }
+      .sprite { font-size: 64px; line-height: 1.1; transition: transform 0.15s; }
+      .sprite.hit { transform: translateX(-10px) rotate(-8deg); filter: brightness(1.6); }
+      .hpbar { height: 12px; background: #4a3b5c; border-radius: 6px; overflow: hidden; margin-top: 8px; }
+      .hpbar > div { height: 100%; background: #e05c5c; border-radius: 6px; transition: width 0.3s; }
+      .fighter.me .hpbar > div { background: #6cc36c; }
+      .name { font-size: 13px; margin-top: 5px; }
+      #log {
+        height: 96px;
+        overflow-y: auto;
+        background: #1d1528;
+        margin: 8px 16px;
+        border-radius: 8px;
+        padding: 8px 12px;
+        font-size: 12.5px;
+        line-height: 1.7;
+      }
+      .actions { display: flex; justify-content: center; gap: 10px; padding: 6px 0 14px; }
+      .actions button {
+        border: 1px solid #d4b46a;
+        background: #3a2c4e;
+        color: #f0e6d2;
+        border-radius: 8px;
+        padding: 9px 20px;
+        font-size: 14px;
+        cursor: pointer;
+      }
+      .actions button:hover { background: #4d3a68; }
+      .actions button:disabled { opacity: 0.4; cursor: not-allowed; }
+      #penguin-img { width: 84px; image-rendering: auto; }
+    </style>
+  </head>
+  <body>
+    <div class="titlebar"><span>🏰 古堡战记</span><button id="close">×</button></div>
+    <div class="arena">
+      <div class="fighter me">
+        <div class="sprite" id="meSprite"><img id="penguin-img" src="" alt="" /></div>
+        <div class="hpbar"><div id="meHp" style="width:100%"></div></div>
+        <div class="name" id="meName"></div>
+      </div>
+      <div style="font-size:30px;align-self:center">⚔️</div>
+      <div class="fighter">
+        <div class="sprite" id="bossSprite">👹</div>
+        <div class="hpbar"><div id="bossHp" style="width:100%"></div></div>
+        <div class="name" id="bossName"></div>
+      </div>
+    </div>
+    <div id="log"></div>
+    <div class="actions">
+      <button id="atk">攻击</button>
+      <button id="heavy">奋力一击</button>
+      <button id="flee">撤退结算</button>
+    </div>
+    <script src="battle.js"></script>
+  </body>
+</html>

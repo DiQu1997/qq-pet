@@ -1,0 +1,1032 @@
+{
+  "//": "所有游戏数值,来源见 deep_research/qq宠物1比1复刻功能规格.md;单位:属性点/分钟,金额:元宝。timeScale>1 可加速时间(测试用)",
+  "timeScale": 1,
+  "decay": {
+    "hungerPerMin": 2,
+    "cleanPerMin": 2,
+    "moodPerMin": 2,
+    "moodPenaltyPerMin": 15,
+    "moodSickPerMin": 5
+  },
+  "attr": {
+    "baseMax": 3000,
+    "perLevelMax": 100,
+    "maxLevelForAttr": 30,
+    "moodMax": 1000,
+    "moodCapWork": 600,
+    "moodCapSchool": 900
+  },
+  "hungerStates": [
+    {
+      "label": "吃撑了",
+      "pct": 0.6
+    },
+    {
+      "label": "吃得很饱",
+      "pct": 0.36
+    },
+    {
+      "label": "不饿",
+      "pct": 0.24
+    },
+    {
+      "label": "有点饿",
+      "pct": 0.12
+    },
+    {
+      "label": "饿坏了",
+      "pct": 0
+    }
+  ],
+  "cleanStates": [
+    {
+      "label": "干干净净",
+      "pct": 0.72
+    },
+    {
+      "label": "好痒啊",
+      "pct": 0.48
+    },
+    {
+      "label": "蓬头垢面",
+      "pct": 0.24
+    },
+    {
+      "label": "脏兮兮",
+      "pct": 0
+    }
+  ],
+  "moodGain": {
+    "click": 100,
+    "clickCooldownSec": 60,
+    "feedWash": 150,
+    "toy": 100,
+    "game": 50,
+    "travelPerMin": 5
+  },
+  "growthByMood": [
+    {
+      "min": 900,
+      "perHour": 2.0,
+      "label": "非常高兴",
+      "color": "green"
+    },
+    {
+      "min": 800,
+      "perHour": 1.8,
+      "label": "很高兴",
+      "color": "green"
+    },
+    {
+      "min": 700,
+      "perHour": 1.6,
+      "label": "挺高兴",
+      "color": "green"
+    },
+    {
+      "min": 600,
+      "perHour": 1.4,
+      "label": "高兴",
+      "color": "green"
+    },
+    {
+      "min": 500,
+      "perHour": 1.2,
+      "label": "还不错",
+      "color": "green"
+    },
+    {
+      "min": 400,
+      "perHour": 1.0,
+      "label": "一般",
+      "color": "yellow"
+    },
+    {
+      "min": 300,
+      "perHour": 0.8,
+      "label": "郁闷",
+      "color": "yellow"
+    },
+    {
+      "min": 200,
+      "perHour": 0.6,
+      "label": "很不爽",
+      "color": "yellow"
+    },
+    {
+      "min": 100,
+      "perHour": 0.4,
+      "label": "很郁闷",
+      "color": "red"
+    },
+    {
+      "min": 0,
+      "perHour": 0.2,
+      "label": "绝顶郁闷",
+      "color": "red"
+    }
+  ],
+  "levelGrowth": [
+    1,
+    3,
+    6,
+    11,
+    18,
+    28,
+    42,
+    59,
+    80,
+    106,
+    137,
+    174,
+    217,
+    267,
+    325,
+    390,
+    463,
+    545,
+    636,
+    737,
+    848,
+    970,
+    1104,
+    1249,
+    1406,
+    1576,
+    1759,
+    1956,
+    2167,
+    2393,
+    2635,
+    2892,
+    3165,
+    3455,
+    3762,
+    4087,
+    4430,
+    4792,
+    5174,
+    5575
+  ],
+  "economy": {
+    "initialYuanbao": 300,
+    "initialRevivePills": 1
+  },
+  "foods": [
+    {
+      "id": "biscuit",
+      "name": "小饼干",
+      "price": 20,
+      "hunger": 360,
+      "icon": "🍪",
+      "desc": "便宜管饱的小零嘴"
+    },
+    {
+      "id": "melon_jelly",
+      "name": "香瓜果冻",
+      "price": 60,
+      "hunger": 1080,
+      "icon": "🍮",
+      "desc": "清甜爽口,宝贝最爱"
+    },
+    {
+      "id": "fish_cookie",
+      "name": "鱼形曲奇饼",
+      "price": 60,
+      "hunger": 1080,
+      "icon": "🐟",
+      "desc": "香脆鱼形,越嚼越香"
+    },
+    {
+      "id": "feast",
+      "name": "豪华大餐",
+      "price": 120,
+      "hunger": 2160,
+      "icon": "🍱",
+      "desc": "一顿顶一天的豪华套餐"
+    }
+  ],
+  "washes": [
+    {
+      "id": "towel",
+      "name": "毛巾",
+      "price": 20,
+      "clean": 720,
+      "icon": "🧽",
+      "desc": "搓一搓,干干净净"
+    },
+    {
+      "id": "soap",
+      "name": "香皂",
+      "price": 20,
+      "clean": 720,
+      "icon": "🧼",
+      "desc": "泡泡好多好香"
+    },
+    {
+      "id": "bath_ball",
+      "name": "沐浴球",
+      "price": 10,
+      "clean": 360,
+      "icon": "🫧",
+      "desc": "赛跑赢来的小奖品"
+    }
+  ],
+  "sickness": {
+    "consultFee": 50,
+    "riskPerMinHungry": 0.004,
+    "riskPerMinDirty": 0.004,
+    "riskPerMinSadUnder500": 0.0015,
+    "stageAdvanceMinutes": 720,
+    "deathAfterFinalStageMinutes": 720,
+    "medicineBonusHunger": 300,
+    "medicineBonusClean": 300,
+    "revivePillPrice": 400,
+    "chains": {
+      "cold": {
+        "name": "感冒链",
+        "stages": [
+          {
+            "disease": "感冒",
+            "medicine": "板蓝根",
+            "price": 20,
+            "quote": "鼻子塞了,好难受……"
+          },
+          {
+            "disease": "发烧",
+            "medicine": "退烧药",
+            "price": 80,
+            "quote": "头好烫,晕乎乎的……"
+          },
+          {
+            "disease": "重感冒",
+            "medicine": "银翘丸",
+            "price": 120,
+            "quote": "打了第一百零一个喷嚏……"
+          },
+          {
+            "disease": "肺炎",
+            "medicine": "金色消炎药水",
+            "price": 200,
+            "quote": "胸口好闷,喘不上气……"
+          }
+        ],
+        "icon": "🤧"
+      },
+      "cough": {
+        "name": "咳嗽链",
+        "stages": [
+          {
+            "disease": "咳嗽",
+            "medicine": "枇杷糖浆",
+            "price": 20,
+            "quote": "咳咳咳……嗓子好痒"
+          },
+          {
+            "disease": "支气管炎",
+            "medicine": "甘草剂",
+            "price": 80,
+            "quote": "咳得停不下来了……"
+          },
+          {
+            "disease": "哮喘",
+            "medicine": "定喘丸",
+            "price": 120,
+            "quote": "呼……呼……好难呼吸"
+          },
+          {
+            "disease": "肺结核",
+            "medicine": "通风散",
+            "price": 200,
+            "quote": "咳出来的都是眼泪……"
+          }
+        ],
+        "icon": "😷"
+      },
+      "stomach": {
+        "name": "肠胃链",
+        "stages": [
+          {
+            "disease": "肚子胀",
+            "medicine": "消食片",
+            "price": 20,
+            "quote": "肚子胀得像个球……"
+          },
+          {
+            "disease": "胃炎",
+            "medicine": "蓝色消炎药水",
+            "price": 80,
+            "quote": "胃里火辣辣的疼……"
+          },
+          {
+            "disease": "胃溃疡",
+            "medicine": "龙胆草",
+            "price": 120,
+            "quote": "疼得直不起腰了……"
+          },
+          {
+            "disease": "胃癌",
+            "medicine": "仙人汤",
+            "price": 200,
+            "quote": "主人,我可能不行了……"
+          }
+        ],
+        "icon": "🤢"
+      }
+    }
+  },
+  "work": {
+    "dailyLimitMinutes": 480,
+    "decayByLevel": [
+      {
+        "minLevel": 0,
+        "hungerPerMin": 3.2,
+        "cleanPerMin": 4.4
+      },
+      {
+        "minLevel": 6,
+        "hungerPerMin": 3.8,
+        "cleanPerMin": 5.6
+      },
+      {
+        "minLevel": 12,
+        "hungerPerMin": 4.4,
+        "cleanPerMin": 6.8
+      },
+      {
+        "minLevel": 18,
+        "hungerPerMin": 5.0,
+        "cleanPerMin": 8.0
+      }
+    ],
+    "jobs": [
+      {
+        "id": "banzhuan",
+        "name": "搬砖头",
+        "place": "建筑工地",
+        "minLevel": 0,
+        "wage": 20,
+        "diplomas": [],
+        "icon": "🧱",
+        "desc": "谁都能干的力气活"
+      },
+      {
+        "id": "niwajiang",
+        "name": "泥瓦匠",
+        "place": "建筑工地",
+        "minLevel": 0,
+        "wage": 20,
+        "diplomas": [],
+        "icon": "🏗️",
+        "desc": "搬砖的进阶版,还是搬砖"
+      },
+      {
+        "id": "huajiang",
+        "name": "花匠",
+        "place": "建筑工地",
+        "minLevel": 6,
+        "wage": 26,
+        "diplomas": [
+          "p_liyi"
+        ],
+        "icon": "🌷",
+        "desc": "给花花草草修剪造型"
+      },
+      {
+        "id": "mujiang",
+        "name": "木匠",
+        "place": "建筑工地",
+        "minLevel": 6,
+        "wage": 26,
+        "diplomas": [
+          "p_laoji"
+        ],
+        "icon": "🪚",
+        "desc": "叮叮当当敲一整天"
+      },
+      {
+        "id": "yuanding",
+        "name": "园丁",
+        "place": "建筑工地",
+        "minLevel": 9,
+        "wage": 28,
+        "diplomas": [
+          "p_yuwen",
+          "p_meishu"
+        ],
+        "icon": "🌳",
+        "desc": "打理整座花园的绿色"
+      },
+      {
+        "id": "jianzhushi",
+        "name": "建筑师",
+        "place": "建筑工地",
+        "minLevel": 24,
+        "wage": 40,
+        "diplomas": [
+          "u_shuxue",
+          "u_meishu"
+        ],
+        "icon": "📐",
+        "desc": "画图纸,盖大楼"
+      },
+      {
+        "id": "jizhe",
+        "name": "记者",
+        "place": "报社",
+        "minLevel": 6,
+        "wage": 26,
+        "diplomas": [
+          "p_yuwen"
+        ],
+        "icon": "🎤",
+        "desc": "跑现场,抢头条"
+      },
+      {
+        "id": "manhuajia",
+        "name": "漫画家",
+        "place": "报社",
+        "minLevel": 15,
+        "wage": 34,
+        "diplomas": [
+          "m_laoji",
+          "m_meishu"
+        ],
+        "icon": "🖍️",
+        "desc": "一格一格画出故事"
+      },
+      {
+        "id": "bianji",
+        "name": "编辑",
+        "place": "报社",
+        "minLevel": 18,
+        "wage": 36,
+        "diplomas": [
+          "u_yuwen"
+        ],
+        "icon": "📰",
+        "desc": "给全岛的稿子把关"
+      },
+      {
+        "id": "sheyingshi",
+        "name": "摄影师",
+        "place": "报社",
+        "minLevel": 18,
+        "wage": 36,
+        "diplomas": [
+          "u_meishu"
+        ],
+        "icon": "📷",
+        "desc": "咔嚓一声定格瞬间"
+      },
+      {
+        "id": "zhiduoxing",
+        "name": "智多星",
+        "place": "报社",
+        "minLevel": 21,
+        "wage": 38,
+        "diplomas": [
+          "u_yuwen",
+          "u_shuxue",
+          "u_zhengzhi"
+        ],
+        "icon": "🧠",
+        "desc": "岛上最聪明的脑袋"
+      },
+      {
+        "id": "baoan",
+        "name": "保安",
+        "place": "警察局",
+        "minLevel": 9,
+        "wage": 28,
+        "diplomas": [
+          "p_wushu",
+          "p_zhengzhi"
+        ],
+        "icon": "🛡️",
+        "desc": "站得笔直守大门"
+      },
+      {
+        "id": "jiaolian",
+        "name": "教练",
+        "place": "警察局",
+        "minLevel": 12,
+        "wage": 32,
+        "diplomas": [
+          "m_wushu"
+        ],
+        "icon": "📣",
+        "desc": "喊得比谁都大声"
+      },
+      {
+        "id": "jingcha",
+        "name": "警察",
+        "place": "警察局",
+        "minLevel": 15,
+        "wage": 34,
+        "diplomas": [
+          "m_wushu",
+          "m_zhengzhi"
+        ],
+        "icon": "👮",
+        "desc": "企鹅岛的治安担当"
+      },
+      {
+        "id": "jiaoguan",
+        "name": "教官",
+        "place": "警察局",
+        "minLevel": 18,
+        "wage": 36,
+        "diplomas": [
+          "u_tiyu"
+        ],
+        "icon": "🎖️",
+        "desc": "把新兵练成好手"
+      },
+      {
+        "id": "wudaojia",
+        "name": "武道家",
+        "place": "警察局",
+        "minLevel": 21,
+        "wage": 38,
+        "diplomas": [
+          "u_tiyu",
+          "u_laoji",
+          "u_wushu"
+        ],
+        "icon": "🥋",
+        "desc": "拳脚功夫登峰造极"
+      },
+      {
+        "id": "lvshi",
+        "name": "律师",
+        "place": "法院",
+        "minLevel": 12,
+        "wage": 32,
+        "diplomas": [
+          "m_zhengzhi"
+        ],
+        "icon": "⚖️",
+        "desc": "一张嘴胜过千军"
+      },
+      {
+        "id": "shenpanguan",
+        "name": "审判官",
+        "place": "法院",
+        "minLevel": 24,
+        "wage": 40,
+        "diplomas": [
+          "u_wushu",
+          "u_zhengzhi"
+        ],
+        "icon": "🏛️",
+        "desc": "敲下法槌一锤定音"
+      },
+      {
+        "id": "chongwuwang",
+        "name": "宠物王",
+        "place": "法院",
+        "minLevel": 30,
+        "wage": 42,
+        "diplomas": [
+          "ALL"
+        ],
+        "icon": "👑",
+        "desc": "全岛最高荣誉,万课加身"
+      },
+      {
+        "id": "yanyuan",
+        "name": "演员",
+        "place": "艺术剧院",
+        "minLevel": 9,
+        "wage": 28,
+        "diplomas": [
+          "p_laoji",
+          "p_liyi"
+        ],
+        "icon": "🎭",
+        "desc": "台上一分钟,台下十年功"
+      },
+      {
+        "id": "geshou",
+        "name": "歌手",
+        "place": "艺术剧院",
+        "minLevel": 12,
+        "wage": 32,
+        "diplomas": [
+          "m_yinyue"
+        ],
+        "icon": "🎙️",
+        "desc": "一开口全场安静"
+      },
+      {
+        "id": "ciquzhe",
+        "name": "词曲者",
+        "place": "艺术剧院",
+        "minLevel": 15,
+        "wage": 34,
+        "diplomas": [
+          "m_yuwen",
+          "m_yinyue"
+        ],
+        "icon": "✍️",
+        "desc": "把心事写成歌"
+      },
+      {
+        "id": "wanrenmi",
+        "name": "万人迷",
+        "place": "艺术剧院",
+        "minLevel": 21,
+        "wage": 38,
+        "diplomas": [
+          "u_meishu",
+          "u_yinyue",
+          "u_liyi"
+        ],
+        "icon": "💫",
+        "desc": "走到哪都被围观"
+      },
+      {
+        "id": "zhihuijia",
+        "name": "指挥家",
+        "place": "艺术剧院",
+        "minLevel": 24,
+        "wage": 40,
+        "diplomas": [
+          "u_tiyu",
+          "u_yinyue"
+        ],
+        "icon": "🎼",
+        "desc": "抬手落手,万人和鸣"
+      }
+    ]
+  },
+  "school": {
+    "stages": [
+      {
+        "prefix": "p",
+        "name": "小学",
+        "minLevel": 6,
+        "hours": 6,
+        "scholarship": 20,
+        "attrGain": 5,
+        "icon": "🏫"
+      },
+      {
+        "prefix": "m",
+        "name": "中学",
+        "minLevel": 12,
+        "hours": 15,
+        "scholarship": 50,
+        "attrGain": 15,
+        "icon": "📚"
+      },
+      {
+        "prefix": "u",
+        "name": "大学",
+        "minLevel": 18,
+        "hours": 30,
+        "scholarship": 100,
+        "attrGain": 40,
+        "icon": "🎓"
+      }
+    ],
+    "subjects": [
+      {
+        "key": "wushu",
+        "name": "武术",
+        "system": "wu",
+        "icon": "🥋"
+      },
+      {
+        "key": "laoji",
+        "name": "劳技",
+        "system": "wu",
+        "icon": "🔧"
+      },
+      {
+        "key": "tiyu",
+        "name": "体育",
+        "system": "wu",
+        "icon": "⚽"
+      },
+      {
+        "key": "zhengzhi",
+        "name": "政治",
+        "system": "zhi",
+        "icon": "🏛️"
+      },
+      {
+        "key": "shuxue",
+        "name": "数学",
+        "system": "zhi",
+        "icon": "➗"
+      },
+      {
+        "key": "yuwen",
+        "name": "语文",
+        "system": "zhi",
+        "icon": "📖"
+      },
+      {
+        "key": "liyi",
+        "name": "礼仪",
+        "system": "mei",
+        "icon": "🎀"
+      },
+      {
+        "key": "yinyue",
+        "name": "音乐",
+        "system": "mei",
+        "icon": "🎵"
+      },
+      {
+        "key": "meishu",
+        "name": "美术",
+        "system": "mei",
+        "icon": "🎨"
+      }
+    ],
+    "systemNames": {
+      "wu": "武力",
+      "zhi": "智力",
+      "mei": "魅力"
+    }
+  },
+  "marriage": {
+    "minLevel": 15,
+    "freeRingLevel": 12,
+    "eggIntervalMinutes": 12000,
+    "maxEggs": 10,
+    "divorcePenaltyMeiPct": 5,
+    "rings": [
+      {
+        "id": "gold_ring",
+        "name": "挚爱金戒",
+        "price": 0,
+        "love": 100,
+        "acceptRate": 0.7,
+        "note": "12级教堂小天使处免费领取,限一枚",
+        "icon": "💛"
+      },
+      {
+        "id": "ruby_ring",
+        "name": "红宝石戒指",
+        "price": 500,
+        "love": 500,
+        "acceptRate": 0.9,
+        "icon": "❤️"
+      },
+      {
+        "id": "diamond_ring",
+        "name": "钻石戒指",
+        "price": 2000,
+        "love": 2000,
+        "acceptRate": 1.0,
+        "icon": "💎"
+      }
+    ],
+    "npcs": [
+      {
+        "id": "npc_lili",
+        "name": "莉莉",
+        "gender": "QMM",
+        "level": 16,
+        "personality": "温柔的粉围巾企鹅,喜欢音乐",
+        "icon": "🎀"
+      },
+      {
+        "id": "npc_taotao",
+        "name": "涛涛",
+        "gender": "QGG",
+        "level": 18,
+        "personality": "阳光的红围巾企鹅,运动健将",
+        "icon": "⚽"
+      },
+      {
+        "id": "npc_bingbing",
+        "name": "冰冰",
+        "gender": "QMM",
+        "level": 22,
+        "personality": "高冷学霸企鹅,大学毕业",
+        "icon": "📚"
+      },
+      {
+        "id": "npc_dudu",
+        "name": "嘟嘟",
+        "gender": "QGG",
+        "level": 15,
+        "personality": "贪吃的小企鹅,爱睡觉",
+        "icon": "🍰"
+      }
+    ]
+  },
+  "travel": {
+    "minLevel": 5,
+    "modes": [
+      {
+        "id": "visit",
+        "name": "拜访好友",
+        "minutes": 30,
+        "fare": 20,
+        "icon": "🏠",
+        "desc": "去好友家串个门"
+      },
+      {
+        "id": "circle",
+        "name": "逛好友圈",
+        "minutes": 60,
+        "fare": 40,
+        "icon": "🌏",
+        "desc": "绕着好友圈溜达一圈"
+      },
+      {
+        "id": "mystery",
+        "name": "随便逛逛(神秘之旅)",
+        "minutes": 120,
+        "fare": 80,
+        "icon": "🧭",
+        "desc": "没有目的地,惊喜最多"
+      }
+    ],
+    "dreamRewardBase": 380,
+    "dreamRewardStep": 462,
+    "dreamRewardMax": 5000,
+    "dreamRewardChance": 0.12,
+    "chestChance": 0.3,
+    "guestChance": 0.35
+  },
+  "welfare": {
+    "signin": {
+      "min": 10,
+      "max": 30
+    },
+    "mousetrap": {
+      "minLevel": 6,
+      "max": 80
+    },
+    "wishTree": {
+      "weekendOnly": true,
+      "rewards": [
+        50,
+        100,
+        200
+      ]
+    },
+    "treasureHunt": {
+      "minLevel": 10,
+      "weekendOnly": true,
+      "min": 5,
+      "max": 50
+    },
+    "race": {
+      "minLevel": 5,
+      "winRate": 0.5,
+      "prizeItem": "bath_ball"
+    }
+  },
+  "games": {
+    "castle": {
+      "name": "古堡战记",
+      "dailyLimit": 3,
+      "pinkDailyLimit": 9,
+      "normalReward": 15,
+      "bosses": [
+        {
+          "name": "长毛怪",
+          "hp": 60,
+          "atk": 8,
+          "reward": 100
+        },
+        {
+          "name": "科学怪人",
+          "hp": 90,
+          "atk": 12,
+          "reward": 120
+        },
+        {
+          "name": "狼人",
+          "hp": 130,
+          "atk": 16,
+          "reward": 150
+        }
+      ]
+    },
+    "maze": {
+      "name": "密室探险",
+      "dailyLimit": 1,
+      "timeLimitSec": 90,
+      "rewardItems": [
+        "towel",
+        "melon_jelly"
+      ]
+    }
+  },
+  "outfits": [
+    {
+      "id": "hat_top",
+      "name": "绅士礼帽",
+      "slot": "hat",
+      "price": 200,
+      "emoji": "🎩",
+      "mei": 5
+    },
+    {
+      "id": "hat_cap",
+      "name": "棒球帽",
+      "slot": "hat",
+      "price": 100,
+      "emoji": "🧢",
+      "mei": 2
+    },
+    {
+      "id": "hat_crown",
+      "name": "国王皇冠",
+      "slot": "hat",
+      "price": 1000,
+      "emoji": "👑",
+      "mei": 20
+    },
+    {
+      "id": "hat_flower",
+      "name": "小红花",
+      "slot": "hat",
+      "price": 50,
+      "emoji": "🌸",
+      "mei": 1
+    },
+    {
+      "id": "scene_star",
+      "name": "星空泡泡",
+      "slot": "scene",
+      "price": 300,
+      "color": "#2c3e6b",
+      "mei": 5
+    },
+    {
+      "id": "scene_beach",
+      "name": "夏帕海岸泡泡",
+      "slot": "scene",
+      "price": 300,
+      "color": "#7ec8e3",
+      "mei": 5
+    },
+    {
+      "id": "scene_snow",
+      "name": "粉钻雪山泡泡",
+      "slot": "scene",
+      "price": 500,
+      "color": "#e8d5f0",
+      "mei": 10
+    }
+  ],
+  "renameCardPrice": 100,
+  "pinkDiamond": {
+    "price": 1000,
+    "days": 30,
+    "shopDiscount": 0.8,
+    "reviveDiscount": 0.8,
+    "freeMealPerDay": 1,
+    "freeWashPerDay": 1,
+    "immuneSickness": true,
+    "freeConsult": true
+  },
+  "bubbles": {
+    "hungry": [
+      "肚子好饿啊……",
+      "主人,我想吃东西~",
+      "咕噜噜……肚子在叫了"
+    ],
+    "dirty": [
+      "身上好痒啊!",
+      "主人,帮我洗个澡嘛~",
+      "我都蓬头垢面了……"
+    ],
+    "sad": [
+      "好无聊啊……",
+      "主人都不理我 T_T",
+      "陪我玩一下嘛~"
+    ],
+    "happy": [
+      "今天心情真好!",
+      "啦啦啦~",
+      "主人最好了!"
+    ],
+    "greet": [
+      "主人好~我来啦!",
+      "想我了没有呀?"
+    ],
+    "working": [
+      "搬砖搬砖,努力赚元宝!",
+      "打工人打工魂~"
+    ],
+    "studying": [
+      "书山有路勤为径……",
+      "这道题好难啊"
+    ],
+    "sick": [
+      "主人,我好像生病了……",
+      "呜呜,好难受"
+    ]
+  }
+}
