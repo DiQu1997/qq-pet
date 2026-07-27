@@ -17,12 +17,73 @@
 以上素材均为各自权利人所有,本项目未获授权,仅作个人学习与技术研究之用。
 PMDCollab 部分依 CC BY-NC 4.0 署名如上,不得商用。
 
+## 环境要求
+
+| 项 | 要求 | 说明 |
+|---|---|---|
+| **Node.js** | **≥ 18**,推荐 **20 LTS** | 最严格的约束来自 vitest(`^18 \|\| >=20`)和 esbuild(`>=18`)。仓库带 `.nvmrc`,用 nvm 的话 `nvm use` 即可 |
+| **npm** | ≥ 9 | 随 Node 18+ 自带 |
+| **操作系统** | **仅在 macOS 上验证过** | Electron 本身跨平台,但桌宠的窗口穿透、托盘、坐标逻辑没在 Windows/Linux 上测过 |
+| 磁盘 | ~300 MB | 其中 Electron 二进制约 290 MB |
+
+首次 `npm install` 会下载 Electron 二进制(约 90 MB),网络慢时需要几分钟。
+
 ## 运行
 
 ```bash
+nvm use          # 可选,若用 nvm
 npm install
 npm start
 ```
+
+## 安装踩坑速查
+
+按报错关键字对号入座:
+
+### `EACCES` / `EEXIST` 指向 `~/.npm/_cacache`
+
+npm 缓存目录权限损坏(常见于曾经用过 `sudo npm install`)。报错长这样:
+
+```
+npm error code EEXIST
+npm error path /Users/xxx/.npm/_cacache/tmp/xxxxxx
+npm error Invalid response body while trying to fetch ...: EACCES: permission denied, rename ...
+```
+
+三选一:
+
+```bash
+sudo chown -R $(id -u):$(id -g) ~/.npm    # 首选:把缓存目录还给当前用户
+npm cache clean --force                    # 或者清掉缓存重来
+npm install --cache /tmp/npm-cache         # 或者临时换个缓存目录绕开
+```
+
+### Electron 下载卡住 / `RequestError` / 超时
+
+`postinstall` 阶段要从 GitHub 下载 Electron 二进制,国内网络容易失败。换镜像:
+
+```bash
+ELECTRON_MIRROR=https://npmmirror.com/mirrors/electron/ npm install
+```
+
+想长期生效就写进 `~/.npmrc`:
+
+```
+electron_mirror=https://npmmirror.com/mirrors/electron/
+```
+
+### `Unsupported engine` 或 vitest / esbuild 起不来
+
+Node 版本低于 18。查版本并升级:
+
+```bash
+node -v                  # 低于 v18 就要升
+nvm install 20 && nvm use 20
+```
+
+### `npm start` 后 Electron 立刻退出(仅 macOS)
+
+见下方「已知问题 · macOS 启动失败」一节,是 iCloud 同步破坏代码签名导致的,与 npm 无关。
 
 测试 / 类型检查:
 

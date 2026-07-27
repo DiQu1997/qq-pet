@@ -4,6 +4,10 @@
   "description": "QQ宠物单机复刻(个人学习怀旧用途)",
   "main": "dist/main.js",
   "private": true,
+  "engines": {
+    "node": ">=18",
+    "npm": ">=9"
+  },
   "scripts": {
     "build": "node build.mjs",
     "start": "npm run build && electron .",
