@@ -423,6 +423,10 @@ function buildMenu(): Menu {
       })),
     },
     { label: "看病(医院)", click: () => openCommunity("hospital") },
+    {
+      label: `给${skin.terms.species}改名(${c.renameCardPrice} 元宝)`,
+      click: () => openCommunity("status:rename"),
+    },
     { type: "separator" },
     ...(busy
       ? [

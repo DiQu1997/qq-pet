@@ -13,22 +13,23 @@ const state = {
   marriage: null, freeRingClaimed: false, daily: {}, dreamRewardCount: 0,
   outfit: { hat: null, scene: null }, ownedOutfits: [], pinkUntil: 0,
 };
-let animCb = () => {}, snapCb = () => {}, bubbleCb = () => {};
+let animCb = () => {}, snapCb = () => {}, bubbleCb = () => {}, gotoCb = () => {};
 const calls = [];
 contextBridge.exposeInMainWorld("qqpet", {
   onSnapshot(cb) { snapCb = cb; }, onBubble(cb) { bubbleCb = cb; },
-  onAnim(cb) { animCb = cb; }, onGotoTab() {},
+  onAnim(cb) { animCb = cb; }, onGotoTab(cb) { gotoCb = cb; },
   petClick() { calls.push("click"); }, petDoubleClick() { calls.push("dblclick"); },
   petMenu() { calls.push("menu"); },
   dragStart(x, y) { calls.push(`drag:${Math.round(x)},${Math.round(y)}`); }, dragEnd() {},
   setInteractive(on) { calls.push(`interactive:${on}`); },
-  async action() { return { ok: true, message: "" }; },
+  async action(kind, id) { calls.push(`${kind}:${id ?? ""}`); return { ok: true, message: "预览" }; },
   async requestSnapshot() { return { state }; },
   async requestConfig() { return cfg; },
   async requestSkin() { return skin; },
   closeWindow() {}, openGame() {},
 });
 contextBridge.exposeInMainWorld("__calls", { get: () => calls.slice(), clear: () => (calls.length = 0) });
+contextBridge.exposeInMainWorld("__gotoTab", (t) => gotoCb(t));
 contextBridge.exposeInMainWorld("__drive", {
   anim: (n) => animCb(n),
   snap: (patch) => snapCb({ state: Object.assign(state, patch) }),

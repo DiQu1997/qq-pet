@@ -186,9 +186,9 @@ function renderStatus(): string {
     bag.map(([k, n]) => `<span class="bagitem">${itemIcon(k)} ${esc(itemName(k))} <b>×${n}</b></span>`).join("") ||
     `<span class="empty">空空如也,去福利站白拿点东西吧~</span>`
   }</div>
-  ${section("✏️", "改名卡")}
+  ${section("✏️", `改名卡 · 现在叫「${esc(s.name)}」`)}
   <div class="inline">
-    <input type="text" id="renameInput" maxlength="8" placeholder="给宝贝起个新名字(1~8字)" />
+    <input type="text" id="renameInput" maxlength="8" placeholder="输入新名字(1~8字),回车确认" />
     ${btn(`使用(💰${cfg.renameCardPrice})`, "doRename()", { gold: true })}
   </div>`;
 }
@@ -756,17 +756,31 @@ function render() {
 (window as any).act = act;
 (window as any).doRename = () => {
   const input = document.getElementById("renameInput") as HTMLInputElement | null;
-  if (input?.value) act("rename", input.value);
+  if (input?.value.trim()) act("rename", input.value.trim());
   else showMsg("先输入一个新名字吧", false);
 };
+// 输入框里按回车直接改名
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Enter" && (e.target as HTMLElement)?.id === "renameInput") {
+    (window as any).doRename();
+  }
+});
 
 window.qqpet.onSnapshot((s) => {
   snap = s;
   render();
 });
 window.qqpet.onGotoTab((tab) => {
-  activeTab = tab;
+  // 支持 "status:rename" 这种带动作的形式,从右键菜单直达并聚焦
+  const [name, action] = tab.split(":");
+  activeTab = name;
   render();
+  if (action === "rename") {
+    const input = document.getElementById("renameInput") as HTMLInputElement | null;
+    input?.scrollIntoView({ block: "center" });
+    input?.focus();
+    input?.classList.add("flash");
+  }
 });
 $c("close").onclick = () => window.qqpet.closeWindow();
 
