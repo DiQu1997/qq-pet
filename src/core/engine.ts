@@ -783,8 +783,10 @@ export class PetEngine {
     if (dead) return dead;
     const name = newName.trim();
     if (!name || name.length > 8) return { ok: false, message: "名字要 1~8 个字" };
-    if (!this.spend(this.config.renameCardPrice))
-      return { ok: false, message: `改名卡要 ${this.config.renameCardPrice} 元宝` };
+    // renameCardPrice 为 0 表示免费改名(默认),>0 时才扣元宝
+    const price = this.config.renameCardPrice ?? 0;
+    if (price > 0 && !this.spend(price))
+      return { ok: false, message: `改名要 ${price} 元宝` };
     this.state.name = name;
     return { ok: true, message: `改名成功!以后就叫「${name}」啦` };
   }

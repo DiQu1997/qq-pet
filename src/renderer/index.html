@@ -52,6 +52,34 @@
         line-height: 1;
         pointer-events: none;
       }
+      /* 头顶名牌:两台机器上要一眼分清谁是谁。
+         透明桌面上什么壁纸都可能,所以用深色药丸+白字保证可读 */
+      #nameplate {
+        position: absolute;
+        left: 50%;
+        transform: translateX(-50%);
+        display: none;
+        align-items: center;
+        gap: 4px;
+        max-width: 200px;
+        padding: 2px 9px;
+        border-radius: 11px;
+        background: rgba(48, 32, 40, 0.72);
+        color: #fff;
+        font-size: 12px;
+        font-weight: 700;
+        line-height: 1.5;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+        pointer-events: none;
+      }
+      #nameplate .lv {
+        font-size: 10px;
+        font-weight: 700;
+        color: #ffd96b;
+      }
       /* 情绪立绘:嵌在气泡里,没有 portraits 的皮肤自动隐藏 */
       #portrait {
         width: 30px; height: 30px;
@@ -123,6 +151,7 @@
       </div>
       <div id="hat"></div>
       <div id="mark"></div>
+      <div id="nameplate"><span id="npName"></span><span class="lv" id="npLv"></span></div>
       <div id="grave">
         <div class="stone"><b>R.I.P</b><span id="graveName"></span></div>
         <div class="base"></div>

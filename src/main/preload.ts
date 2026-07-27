@@ -9,6 +9,8 @@ contextBridge.exposeInMainWorld("qqpet", {
     ipcRenderer.on("anim", (_e, name) => cb(name)),
   onGotoTab: (cb: (tab: string) => void) =>
     ipcRenderer.on("goto-tab", (_e, tab) => cb(tab)),
+  onUiPrefs: (cb: (p: any) => void) =>
+    ipcRenderer.on("ui-prefs", (_e, p) => cb(p)),
   petClick: () => ipcRenderer.send("pet-click"),
   petDoubleClick: () => ipcRenderer.send("pet-double-click"),
   petMenu: () => ipcRenderer.send("pet-menu"),

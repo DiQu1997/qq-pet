@@ -20,6 +20,7 @@ interface Skin {
   };
   rig?: RigSpec;
   portraits?: { dir: string; map: Record<string, string> };
+  nameplateOffset?: number;
 }
 
 const $ = <T extends HTMLElement = HTMLElement>(id: string) =>
@@ -36,6 +37,9 @@ const markEl = $("mark");
 const sceneEl = $("scene");
 const portraitEl = $<HTMLImageElement>("portrait");
 const bubbleTextEl = $("bubbleText");
+const nameplateEl = $("nameplate");
+const npNameEl = $("npName");
+const npLvEl = $("npLv");
 
 let skin: Skin | null = null;
 let outfits: any[] = [];
@@ -52,6 +56,7 @@ let petW = 138;
 let petH = 150;
 
 let bubbleTimer: ReturnType<typeof setTimeout> | null = null;
+let showName = true;
 
 // ---------- 初始化 ----------
 async function init() {
@@ -86,6 +91,8 @@ function positionOverlays() {
   hatEl.style.bottom = `${bottom + petH - 26}px`;
   markEl.style.left = `${cx + petW / 2 - 16}px`;
   markEl.style.bottom = `${bottom + petH - 34}px`;
+  // 名牌贴头顶的距离随皮肤而定(精灵图上方常有透明留白)
+  nameplateEl.style.bottom = `${bottom + petH + (skin?.nameplateOffset ?? 2)}px`;
   sceneEl.style.width = `${petW * 1.08}px`;
   sceneEl.style.height = `${petH * 0.92}px`;
 }
@@ -177,6 +184,11 @@ function applySnapshot(s: any) {
 
   // 病态标记
   markEl.textContent = st.sickness && !dead ? "🤒" : "";
+
+  // 头顶名牌
+  npNameEl.textContent = st.name;
+  npLvEl.textContent = dead ? "" : `Lv.${s.level}`;
+  nameplateEl.style.display = showName && !dead ? "flex" : "none";
 
 }
 
@@ -282,6 +294,10 @@ stage.addEventListener("contextmenu", (e) => {
   window.qqpet.petMenu();
 });
 
+window.qqpet.onUiPrefs((p) => {
+  showName = p.showName !== false;
+  if (snap) applySnapshot(snap);
+});
 window.qqpet.onAnim(setAnim);
 window.qqpet.onBubble(showBubble);
 window.qqpet.onSnapshot(applySnapshot);

@@ -392,11 +392,30 @@ describe("M7 装扮与粉钻", () => {
     expect(e.state.sickness).toBeNull();
   });
 
-  it("改名卡 100 元宝", () => {
+  it("改名默认免费,可反复改", () => {
     const e = fresh();
-    const r = e.rename("小企鹅");
-    expect(r.ok).toBe(true);
+    const y0 = e.state.yuanbao;
+    expect(e.rename("小企鹅").ok).toBe(true);
     expect(e.state.name).toBe("小企鹅");
-    expect(e.state.yuanbao).toBe(200);
+    expect(e.rename("大企鹅").ok).toBe(true);
+    expect(e.state.name).toBe("大企鹅");
+    expect(e.state.yuanbao).toBe(y0);           // 一分钱不花
+  });
+
+  it("名字长度校验 1~8 字,空名字拒绝", () => {
+    const e = fresh();
+    expect(e.rename("   ").ok).toBe(false);
+    expect(e.rename("一二三四五六七八九").ok).toBe(false);
+    expect(e.state.name).toBe("测试");
+  });
+
+  it("renameCardPrice > 0 时仍会扣钱(配置保留)", () => {
+    const paid = new PetEngine(
+      { ...config, renameCardPrice: 100 },
+      PetEngine.newPet(config, "测试", "QGG", NOW),
+    );
+    const y0 = paid.state.yuanbao;
+    expect(paid.rename("阿花").ok).toBe(true);
+    expect(paid.state.yuanbao).toBe(y0 - 100);
   });
 });

@@ -176,6 +176,12 @@ function pushSnapshot(): void {
   if (alive(communityWin)) communityWin.webContents.send("snapshot", snap);
   if (alive(gameWin)) gameWin.webContents.send("snapshot", snap);
 }
+/** UI 偏好(名牌显隐等)推给桌宠窗口 */
+function pushUiPrefs(): void {
+  const p = { showName: loadPrefs().showName !== false };
+  if (alive(petWin)) petWin.webContents.send("ui-prefs", p);
+}
+
 function bubble(text: string): void {
   if (alive(petWin)) petWin.webContents.send("bubble", text);
 }
@@ -326,6 +332,7 @@ function createPetWindow(): void {
   petWin.setIgnoreMouseEvents(true, { forward: true });
   petWin.loadFile(join(__dirname, "index.html"));
   petWin.webContents.on("did-finish-load", () => {
+    pushUiPrefs();
     pushSnapshot();
     if (!engine.state.dead) {
       anim("sing");
@@ -424,7 +431,7 @@ function buildMenu(): Menu {
     },
     { label: "看病(医院)", click: () => openCommunity("hospital") },
     {
-      label: `给${skin.terms.species}改名(${c.renameCardPrice} 元宝)`,
+      label: `给${skin.terms.species}改名`,
       click: () => openCommunity("status:rename"),
     },
     { type: "separator" },
@@ -452,6 +459,15 @@ function buildMenu(): Menu {
     { label: "密室探险", click: () => openGame("maze") },
     { type: "separator" },
     { label: "免打扰模式", type: "checkbox", checked: s.dnd, enabled: !busy, click: () => doAction("dnd") },
+    {
+      label: "显示头顶名字",
+      type: "checkbox",
+      checked: loadPrefs().showName !== false,
+      click: () => {
+        savePrefs({ showName: loadPrefs().showName === false });
+        pushUiPrefs();
+      },
+    },
     {
       label: "切换皮肤",
       submenu: listSkins().map((sk) => ({

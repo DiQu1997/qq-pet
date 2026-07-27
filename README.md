@@ -174,6 +174,7 @@ npm run build && open -n "$HOME/Library/Application Support/qq-pet-runtime/Elect
 - `sheet` — 精灵图:帧宽高 + 每个动画在第几行、几帧、帧率
 - `rig` — 骨骼:SVG 文件、各部件枢轴点、子骨骼列表
 - `portraits` — 情绪立绘(可选),按心情/病/死/活动自动切换,显示在气泡和社区 HUD 里
+- `nameplateOffset` — 头顶名牌相对宠物顶端的偏移(精灵图上方常有透明留白,需负值上提)
 
 ### 骨骼动画的关键约束
 
@@ -226,6 +227,10 @@ npm run build && open -n "$HOME/Library/Application Support/qq-pet-runtime/Elect
 - 每日签到、捕鼠夹(6 级)、周末许愿树/寻宝、嘉年华牛翔赛跑,跨天自动重置
 
 **M6 小游戏**:古堡战记(回合制打长毛怪/科学怪人/狼人,武力值加成,日限 3 次)、密室探险(限时迷宫,方向键,奖道具)
+
+**改名与名牌**
+- 改名免费、可反复改(`config.json` 的 `renameCardPrice` 设为 >0 可改回收费)
+- 桌宠头顶显示「名字 + 等级」名牌,多台机器上一眼分清谁是谁;右键菜单可关闭
 
 **M7 装扮 + 粉钻**
 - 帽子/场景泡泡装扮(覆盖层渲染,两种后端通用)、名品城魅力加成、改名卡

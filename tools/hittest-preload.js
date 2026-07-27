@@ -1,9 +1,18 @@
-const { contextBridge, ipcRenderer } = require("electron");
+/**
+ * 测试用 preload 桩:模拟 src/main/preload.ts 暴露的 window.qqpet。
+ *
+ * ⚠ 这个桩必须和真实 preload 的接口 **完全一致**:
+ *   - 少一个方法(如 onUiPrefs),渲染层调用时会 TypeError,整个脚本静默死掉;
+ *   - 快照少字段(如 level),界面显示 undefined 却不会让测试失败 —— 假通过。
+ * 本项目已经因为这两点各踩过一次,改动时请对照 src/main/preload.ts 逐项核对。
+ */
+const { contextBridge } = require("electron");
 const fs = require("fs");
 const DIST = require("path").join(__dirname, "..", "dist");
 const SKIN_ID = process.env.SKIN_ID || "penguin";
 const skin = JSON.parse(fs.readFileSync(`${DIST}/skins/${SKIN_ID}/skin.json`, "utf-8"));
 const cfg = JSON.parse(fs.readFileSync(`${DIST}/config.json`, "utf-8"));
+
 const state = {
   name: skin.terms.defaultName, gender: "QGG", generation: 1, parents: null,
   hunger: 2600, clean: 1900, mood: 850, health: 5, growth: 120, yuanbao: 640,
@@ -13,14 +22,21 @@ const state = {
   marriage: null, freeRingClaimed: false, daily: {}, dreamRewardCount: 0,
   outfit: { hat: null, scene: null }, ownedOutfits: [], pinkUntil: 0,
 };
-let animCb = () => {}, snapCb = () => {}, bubbleCb = () => {}, gotoCb = () => {};
 
-/** 完整快照:字段必须与 StatusSnapshot 对齐,否则测试会假通过 */
+let animCb = () => {};
+let snapCb = () => {};
+let bubbleCb = () => {};
+let gotoCb = () => {};
+let uiCb = () => {};
+
+/** 完整快照:字段须与 StatusSnapshot 对齐,派生规则照抄引擎,避免与产品脱节 */
 function snapshot() {
   const level = cfg.levelGrowth.filter((g) => state.growth >= g).length || 1;
-  const attrMax = cfg.attr.baseMax + cfg.attr.perLevelMax * Math.min(level, cfg.attr.maxLevelForAttr);
-  const band = cfg.growthByMood.find((b) => state.mood >= b.min) ||
-               cfg.growthByMood[cfg.growthByMood.length - 1];
+  const attrMax =
+    cfg.attr.baseMax + cfg.attr.perLevelMax * Math.min(level, cfg.attr.maxLevelForAttr);
+  const band =
+    cfg.growthByMood.find((b) => state.mood >= b.min) ||
+    cfg.growthByMood[cfg.growthByMood.length - 1];
   const label = (v, bands) => {
     for (const b of bands) if (b.pct > 0 && v >= attrMax * b.pct) return b.label;
     return bands[bands.length - 1].label;
@@ -42,24 +58,40 @@ function snapshot() {
     activityLabel: "",
   };
 }
+
 const calls = [];
+
+// —— 与 src/main/preload.ts 一一对应 ——
 contextBridge.exposeInMainWorld("qqpet", {
-  onSnapshot(cb) { snapCb = cb; }, onBubble(cb) { bubbleCb = cb; },
-  onAnim(cb) { animCb = cb; }, onGotoTab(cb) { gotoCb = cb; },
-  petClick() { calls.push("click"); }, petDoubleClick() { calls.push("dblclick"); },
+  onSnapshot(cb) { snapCb = cb; },
+  onBubble(cb) { bubbleCb = cb; },
+  onAnim(cb) { animCb = cb; },
+  onGotoTab(cb) { gotoCb = cb; },
+  onUiPrefs(cb) { uiCb = cb; },
+  petClick() { calls.push("click"); },
+  petDoubleClick() { calls.push("dblclick"); },
   petMenu() { calls.push("menu"); },
-  dragStart(x, y) { calls.push(`drag:${Math.round(x)},${Math.round(y)}`); }, dragEnd() {},
+  dragStart(x, y) { calls.push(`drag:${Math.round(x)},${Math.round(y)}`); },
+  dragEnd() {},
   setInteractive(on) { calls.push(`interactive:${on}`); },
   async action(kind, id) { calls.push(`${kind}:${id ?? ""}`); return { ok: true, message: "预览" }; },
   async requestSnapshot() { return snapshot(); },
   async requestConfig() { return cfg; },
   async requestSkin() { return skin; },
-  closeWindow() {}, openGame() {},
+  closeWindow() {},
+  openGame() {},
 });
-contextBridge.exposeInMainWorld("__calls", { get: () => calls.slice(), clear: () => (calls.length = 0) });
+
+// —— 测试驱动接口 ——
+contextBridge.exposeInMainWorld("__calls", {
+  get: () => calls.slice(),
+  clear: () => (calls.length = 0),
+});
 contextBridge.exposeInMainWorld("__gotoTab", (t) => gotoCb(t));
 contextBridge.exposeInMainWorld("__drive", {
   anim: (n) => animCb(n),
-  snap: (patch) => snapCb({ state: Object.assign(state, patch) }),
+  /** 改状态并推送**完整**快照(不是只带 state 的半成品) */
+  snap: (patch) => { Object.assign(state, patch); snapCb(snapshot()); },
   bubble: (t) => bubbleCb(t),
+  ui: (p) => uiCb(p),
 });

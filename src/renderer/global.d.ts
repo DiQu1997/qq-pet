@@ -4,6 +4,7 @@ interface QQPetBridge {
   onBubble(cb: (text: string) => void): void;
   onAnim(cb: (name: string) => void): void;
   onGotoTab(cb: (tab: string) => void): void;
+  onUiPrefs(cb: (p: any) => void): void;
   petClick(): void;
   petDoubleClick(): void;
   petMenu(): void;

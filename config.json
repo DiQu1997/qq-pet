@@ -981,7 +981,7 @@
       "mei": 10
     }
   ],
-  "renameCardPrice": 100,
+  "renameCardPrice": 0,
   "pinkDiamond": {
     "price": 1000,
     "days": 30,

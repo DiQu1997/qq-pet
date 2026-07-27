@@ -218,11 +218,14 @@ function renderStatus(): string {
     bag.map(([k, n]) => `<span class="bagitem">${itemIcon(k)} ${esc(itemName(k))} <b>×${n}</b></span>`).join("") ||
     `<span class="empty">空空如也,去福利站白拿点东西吧~</span>`
   }</div>
-  ${section("✏️", `改名卡 · 现在叫「${esc(s.name)}」`)}
+  ${section("✏️", `改名 · 现在叫「${esc(s.name)}」`)}
   <div class="inline">
     <input type="text" id="renameInput" maxlength="8" placeholder="输入新名字(1~8字),回车确认" />
-    ${btn(`使用(💰${cfg.renameCardPrice})`, "doRename()", { gold: true })}
-  </div>`;
+    ${btn(cfg.renameCardPrice > 0 ? `改名(💰${cfg.renameCardPrice})` : "改名(免费)", "doRename()", { gold: true })}
+  </div>
+  <p style="font-size:11.5px;color:var(--ink-soft);margin:6px 0 0">
+    改名免费、可以随便改。名字会显示在桌宠头顶,方便区分不同机器上的宝贝。
+  </p>`;
 }
 
 function itemName(id: string): string {
