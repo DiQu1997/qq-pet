@@ -168,7 +168,37 @@
         text-shadow: 0 1px 0 rgba(255,255,255,0.5);
       }
       .minibars { display: flex; gap: 8px; }
-      .minibar { flex: 1; }
+      .minibar { flex: 1; position: relative; cursor: help; }
+      /* 悬停显示精确数值:游戏里光看百分比不够,要知道还剩多少、还能撑多久 */
+      .minibar[data-tip]:hover::after {
+        content: attr(data-tip);
+        position: absolute;
+        left: 50%; bottom: calc(100% + 8px);
+        transform: translateX(-50%);
+        z-index: 20;
+        white-space: pre-line;
+        min-width: 150px;
+        padding: 7px 10px;
+        border-radius: 9px;
+        background: rgba(48, 32, 40, 0.95);
+        color: #fff;
+        font-size: 11.5px;
+        line-height: 1.6;
+        text-align: left;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+        pointer-events: none;
+      }
+      .minibar[data-tip]:hover::before {
+        content: "";
+        position: absolute;
+        left: 50%; bottom: calc(100% + 2px);
+        margin-left: -5px;
+        border: 5px solid transparent;
+        border-top-color: rgba(48, 32, 40, 0.95);
+        border-bottom: 0;
+        z-index: 21;
+        pointer-events: none;
+      }
       .minibar .lab {
         display: flex; justify-content: space-between;
         font-size: 10px; color: var(--ink-soft); margin-bottom: 2px;

@@ -104,11 +104,25 @@ function renderHud(): string {
   const next = snap.nextLevelGrowth;
   const base = snap.levelBase ?? 0;
   const gPct = next ? ((s.growth - base) / (next - base)) * 100 : 100;
-  const mini = (cls: string, label: string, val: number, max: number, tagText: string) =>
-    `<div class="minibar">
+  const mini = (cls: string, label: string, val: number, max: number, tagText: string, tip = "") =>
+    `<div class="minibar"${tip ? ` data-tip="${esc(tip)}"` : ""}>
       <div class="lab"><span>${label} ${esc(tagText)}</span><span>${Math.round((val / max) * 100)}%</span></div>
       <div class="track"><i class="${cls}" style="width:${Math.max(0, Math.min(100, (val / max) * 100))}%"></i></div>
     </div>`;
+
+  // 掉到警戒线还有多久(小时)。打工时消耗更大,按当前活动取速率
+  const workRate = cfg.work.decayByLevel
+    .slice()
+    .reverse()
+    .find((b: any) => snap.level >= b.minLevel);
+  const working = s.activity?.type === "work";
+  const hRate = working && workRate ? workRate.hungerPerMin : cfg.decay.hungerPerMin;
+  const cRate = working && workRate ? workRate.cleanPerMin : cfg.decay.cleanPerMin;
+  const hoursTo = (cur: number, floor: number, rate: number) =>
+    rate > 0 && cur > floor ? ((cur - floor) / rate / 60).toFixed(1) : "0";
+  // 阈值与引擎一致:饥饿 24%、清洁 48% 以下会掉心情并容易生病
+  const hungerWarn = snap.hungerMax * 0.24;
+  const cleanWarn = snap.cleanMax * 0.48;
   return `<div class="hud">
     <div class="avatar" style="${avatarStyle()}"></div>
     <div class="hud-main">
@@ -121,10 +135,28 @@ function renderHud(): string {
         ${snap.activityLabel ? greyTag(snap.activityLabel) : ""}
       </div>
       <div class="minibars">
-        ${mini("f-hunger", "🍚", s.hunger, snap.hungerMax, snap.hungerLabel)}
-        ${mini("f-clean", "🛁", s.clean, snap.cleanMax, snap.cleanLabel)}
-        ${mini("f-mood", "💗", s.mood, 1000, snap.moodLabel)}
-        ${mini("f-growth", "🌱", gPct, 100, `${snap.growthPerHour}/时`)}
+        ${mini("f-hunger", "🍚", s.hunger, snap.hungerMax, snap.hungerLabel,
+          `饥饿 ${Math.round(s.hunger)} / ${snap.hungerMax}(${snap.hungerLabel})\n` +
+          `每分钟 -${hRate}${working ? "(打工中)" : ""}\n` +
+          (s.hunger > hungerWarn
+            ? `约 ${hoursTo(s.hunger, hungerWarn, hRate)} 小时后进入饥饿`
+            : "⚠️ 已进入饥饿,会掉心情且容易生病"))}
+        ${mini("f-clean", "🛁", s.clean, snap.cleanMax, snap.cleanLabel,
+          `清洁 ${Math.round(s.clean)} / ${snap.cleanMax}(${snap.cleanLabel})\n` +
+          `每分钟 -${cRate}${working ? "(打工中)" : ""}\n` +
+          (s.clean > cleanWarn
+            ? `约 ${hoursTo(s.clean, cleanWarn, cRate)} 小时后变脏`
+            : "⚠️ 已经脏了,会掉心情且容易生病"))}
+        ${mini("f-mood", "💗", s.mood, 1000, snap.moodLabel,
+          `心情 ${Math.round(s.mood)} / 1000(${snap.moodLabel})\n` +
+          `当前成长速度 ${snap.growthPerHour} / 小时\n` +
+          `点一下宠物 +${cfg.moodGain.click}(每分钟一次)、喂食洗澡 +${cfg.moodGain.feedWash}`)}
+        ${mini("f-growth", "🌱", gPct, 100, `${snap.growthPerHour}/时`,
+          snap.nextLevelGrowth
+            ? `成长值 ${s.growth.toFixed(1)} / ${snap.nextLevelGrowth}\n` +
+              `距离 Lv.${snap.level + 1} 还差 ${(snap.nextLevelGrowth - s.growth).toFixed(1)}\n` +
+              `按当前速度约 ${((snap.nextLevelGrowth - s.growth) / snap.growthPerHour).toFixed(1)} 小时`
+            : `成长值 ${s.growth.toFixed(1)}(已满级)`)}
       </div>
     </div>
     ${snap.isPink ? `<div class="badge-pink">💎 粉钻</div>` : ""}

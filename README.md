@@ -195,6 +195,8 @@ npm run build && open -n "$HOME/Library/Application Support/qq-pet-runtime/Elect
 - `src/renderer/rig.ts` — 骨骼动画引擎(父子层级 + 体积守恒),rig 类皮肤共用
 - 鼠标穿透:桌宠窗口(220×300)比宠物本身大,默认 `setIgnoreMouseEvents(true, {forward:true})`
   让透明区不挡下层应用;渲染层靠 mousemove 判断光标是否压在宠物上,再通知主进程临时恢复可交互
+- 单实例:`app.requestSingleInstanceLock()`。重复 `npm start` 时第二个实例直接退出,
+  否则两个实例会同时 tick 并每 15 秒抢写同一个 `save.json`,后写的覆盖先写的 → 进度丢失
 - 存档:`~/Library/Application Support/qq-pet/save.json`;退出期间不成长也不会死(与原版一致)
 - 偏好:同目录 `prefs.json`(当前皮肤等本机设置,与项目默认值 `config.json` 分开)
 

@@ -771,28 +771,45 @@ ipcMain.on("close-window", (e) => BrowserWindow.fromWebContents(e.sender)?.close
 ipcMain.on("open-game", (_e, page: "battle" | "maze") => openGame(page));
 
 // ---------- 启动 ----------
-app.whenReady().then(() => {
-  logLine(`app ready, userData=${app.getPath("userData")}`);
-  if (process.platform === "darwin") app.dock?.hide();
-  const config = loadConfig();
-  engine = new PetEngine(config, loadOrAdopt(config));
+// 单实例锁:两个实例会同时 tick、同时写 save.json,后写的覆盖先写的 → 进度丢失。
+// 抢不到锁的那个直接退出,并让已在运行的实例把宠物叫出来。
+if (!app.requestSingleInstanceLock()) {
+  app.quit();
+} else {
+  app.on("second-instance", () => {
+    if (alive(petWin)) {
+      petWin.show();
+      comeBack();
+      bubble("我已经在这儿啦~");
+    }
+  });
+  main();
+}
 
-  createPetWindow();
-  createTray();
-  scheduleBehavior();
+function main(): void {
+  app.whenReady().then(() => {
+    logLine(`app ready, userData=${app.getPath("userData")}`);
+    if (process.platform === "darwin") app.dock?.hide();
+    const config = loadConfig();
+    engine = new PetEngine(config, loadOrAdopt(config));
 
-  const TICK_SEC = 15;
-  setInterval(() => {
-    const minutes = (TICK_SEC / 60) * (config.timeScale || 1);
-    const events = engine.tick(minutes, Date.now());
-    if (events.length) handleEvents(events);
-    nagCheck();
-    pushSnapshot();
-    save();
-  }, TICK_SEC * 1000);
+    createPetWindow();
+    createTray();
+    scheduleBehavior();
 
-  logLine("startup complete");
-});
+    const TICK_SEC = 15;
+    setInterval(() => {
+      const minutes = (TICK_SEC / 60) * (config.timeScale || 1);
+      const events = engine.tick(minutes, Date.now());
+      if (events.length) handleEvents(events);
+      nagCheck();
+      pushSnapshot();
+      save();
+    }, TICK_SEC * 1000);
+
+    logLine("startup complete");
+  });
+}
 
 app.on("before-quit", () => {
   if (engine?.state.activity.type === "work") engine.settleWork("退出前自动结算:");
