@@ -13,7 +13,8 @@
     "start": "npm run build && electron .",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
-    "hittest": "npm run build && node tools/run-hittest.mjs"
+    "hittest": "npm run build && node tools/run-hittest.mjs",
+    "postinstall": "node tools/fix-electron-signature.mjs"
   },
   "devDependencies": {
     "@types/node": "^20.14.0",

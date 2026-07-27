@@ -36,6 +36,19 @@ npm install
 npm start
 ```
 
+测试 / 类型检查:
+
+```bash
+npm test
+npm run typecheck
+```
+
+桌宠交互回归测试(在真实 Electron 里派发鼠标事件,验证单击/双击/右键/拖拽/鼠标穿透):
+
+```bash
+npm run hittest
+```
+
 ## 安装踩坑速查
 
 按报错关键字对号入座:
@@ -83,34 +96,45 @@ nvm install 20 && nvm use 20
 
 ### `npm start` 后 Electron 立刻退出(仅 macOS)
 
-见下方「已知问题 · macOS 启动失败」一节,是 iCloud 同步破坏代码签名导致的,与 npm 无关。
-
-测试 / 类型检查:
-
-```bash
-npm test
-npm run typecheck
-```
-
-桌宠交互回归测试(在真实 Electron 里派发鼠标事件,验证单击/双击/右键/拖拽/鼠标穿透):
-
-```bash
-npm run hittest
-```
+见下方「已知问题 · macOS 启动失败」一节,是 Electron 的 ad-hoc 签名失效导致的,与 npm 本身无关。
 
 ## 已知问题 · macOS 启动失败(Electron 被内核 SIGKILL)
 
 **症状**:`npm start` 或直接跑 Electron 立刻退出,报
 `Electron exited with signal SIGKILL`,连 `Electron --version` 都是 exit 137;
 `codesign --verify` 报 `resource fork, Finder information, or similar detritus not allowed`。
+个别环境下 `Electron.app` 甚至会在启动后消失。
 
-**原因**:项目放在 **iCloud 同步范围内的目录**(`~/Desktop`、`~/Documents` 默认都在),
-iCloud 会持续给文件写扩展属性(`com.apple.FinderInfo`、`com.apple.provenance` 等),
-破坏 `Electron.app` 的 ad-hoc 签名 → macOS 内核直接杀进程。
-在原地 `xattr -c` + 重新签名**无效**,因为 iCloud 会立刻再写回去。
+**机制**:npm 分发的 Electron 二进制是 **ad-hoc 签名、从未经过 Apple 公证**的
+—— 可以自己验证:
 
-**解法**:把 Electron 运行时复制到不受同步影响的目录、剥掉扩展属性、重新 ad-hoc 签名,
-之后从那个副本启动(项目源码留在原地不用动):
+```bash
+codesign -dvvv node_modules/electron/dist/Electron.app   # → Signature=adhoc, TeamIdentifier=not set
+xcrun stapler validate node_modules/electron/dist/Electron.app  # → does not have a ticket stapled
+```
+
+所以这**不是**"公证票据被吊销"(没有票据可吊销),`spctl` 报 `rejected` 也属正常
+(任何 ad-hoc 签名的 app 都会被 Gatekeeper 拒绝)。真正的机制是:arm64 上二进制
+必须至少有 ad-hoc 签名,而**签名之后任何字节改动都会让签名失效,内核直接 SIGKILL**。
+最常见的"改动"来源是文件系统给 bundle 写扩展属性。
+
+**修复**:`npm install` 会自动跑 `tools/fix-electron-signature.mjs`
+(剥扩展属性 → 重新 ad-hoc 签名 → 校验),多数情况到此为止,会看到
+`✓ Electron 签名已修复`。
+
+**如果脚本提示校验仍未通过**,说明项目在 **iCloud 同步目录**里
+(`~/Desktop`、`~/Documents` 默认都是)。iCloud 会持续写入
+`com.apple.fileprovider.fpfs#P` 等属性,原地重签刚签完就被破坏,徒劳。
+两个办法:
+
+**办法一(推荐,一劳永逸)** —— 把项目移出同步目录:
+
+```bash
+mv ~/Desktop/workspace/qq-pet ~/dev/qq-pet
+```
+
+**办法二(变通)** —— 把运行时复制到同步范围外、剥属性、重签,之后从副本启动
+(项目源码留在原地不用动):
 
 ```bash
 RT="$HOME/Library/Application Support/qq-pet-runtime" && rm -rf "$RT" && mkdir -p "$RT" && ditto --noextattr --norsrc node_modules/electron/dist/Electron.app "$RT/Electron.app" && codesign --force --deep --sign - "$RT/Electron.app" && codesign --verify --deep --strict "$RT/Electron.app" && echo OK
@@ -123,8 +147,6 @@ npm run build && open -n "$HOME/Library/Application Support/qq-pet-runtime/Elect
 ```
 
 每次 `npm install` 重装 Electron 后需要重跑一次上面的复制+签名。
-**根治办法**:把项目移出 iCloud 同步目录(例如 `~/dev/qq-pet`),或给 `node_modules`
-加 `.nosync` 后缀排除同步 —— 之后 `npm start` 就能正常用了。
 
 排障日志在 `~/Library/Application Support/qq-pet/main.log`(记录启动、未捕获异常、存档失败)。
 
