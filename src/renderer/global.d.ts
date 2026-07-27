@@ -12,6 +12,7 @@ interface QQPetBridge {
   action(kind: string, id?: string, extra?: string): Promise<{ ok: boolean; message: string }>;
   requestSnapshot(): Promise<any>;
   requestConfig(): Promise<any>;
+  requestSkin(): Promise<any>;
   closeWindow(): void;
   openGame(page: string): void;
 }

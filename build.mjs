@@ -31,6 +31,6 @@ cpSync("src/renderer/index.html", "dist/index.html");
 cpSync("src/renderer/community.html", "dist/community.html");
 cpSync("src/renderer/battle.html", "dist/battle.html");
 cpSync("src/renderer/maze.html", "dist/maze.html");
-cpSync("assets", "dist/assets", { recursive: true });
+cpSync("skins", "dist/skins", { recursive: true });
 cpSync("config.json", "dist/config.json");
 console.log("build ok");

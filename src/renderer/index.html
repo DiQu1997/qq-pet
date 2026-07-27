@@ -3,22 +3,133 @@
   <head>
     <meta charset="utf-8" />
     <style>
-      html,
-      body {
+      html, body {
         margin: 0;
         padding: 0;
         overflow: hidden;
         background: transparent;
         user-select: none;
         -webkit-user-select: none;
+        font-family: "PingFang SC", sans-serif;
       }
-      canvas {
-        display: block;
+      #stage {
+        position: relative;
+        width: 220px;
+        height: 300px;
       }
+      /* 宠物本体:贴底居中,两种后端择一显示 */
+      #pet {
+        position: absolute;
+        left: 0; right: 0; bottom: 0;
+        display: flex;
+        justify-content: center;
+        align-items: flex-end;
+      }
+      #pet.hidden { display: none; }
+      #rig svg { display: block; }
+      canvas { display: block; }
+
+      /* 装扮:场景光晕在最底层,帽子压在头顶 */
+      #scene {
+        position: absolute;
+        left: 50%; bottom: 8px;
+        transform: translateX(-50%);
+        border-radius: 50%;
+        opacity: 0.35;
+        pointer-events: none;
+      }
+      #hat {
+        position: absolute;
+        left: 50%;
+        transform: translateX(-50%);
+        font-size: 34px;
+        line-height: 1;
+        pointer-events: none;
+      }
+      #mark {
+        position: absolute;
+        font-size: 22px;
+        line-height: 1;
+        pointer-events: none;
+      }
+      /* 情绪立绘:嵌在气泡里,没有 portraits 的皮肤自动隐藏 */
+      #portrait {
+        width: 30px; height: 30px;
+        flex-shrink: 0;
+        image-rendering: pixelated;
+        display: none;
+      }
+      /* 气泡:HTML 实现,两种后端通用 */
+      #bubble {
+        position: absolute;
+        left: 8px; right: 8px; top: 6px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 9px;
+        background: rgba(255, 255, 255, 0.94);
+        border: 1.5px solid #f5a0b9;
+        border-radius: 11px;
+        font-size: 12.5px;
+        line-height: 1.4;
+        color: #5a3e48;
+        text-align: left;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+        opacity: 0;
+        transition: opacity 0.25s;
+        pointer-events: none;
+      }
+      #bubble.show { opacity: 1; }
+      #bubble::after {
+        content: "";
+        position: absolute;
+        left: 50%; bottom: -7px;
+        margin-left: -6px;
+        border: 6px solid transparent;
+        border-top-color: rgba(255,255,255,0.94);
+        border-bottom: 0;
+      }
+      /* 坟墓 */
+      #grave {
+        position: absolute;
+        left: 0; right: 0; bottom: 14px;
+        text-align: center;
+        display: none;
+      }
+      #grave .stone {
+        display: inline-block;
+        width: 92px; height: 112px;
+        background: linear-gradient(180deg, #a8aeb6, #8b9098);
+        border-radius: 46px 46px 5px 5px;
+        box-shadow: inset 0 -4px 0 rgba(0,0,0,0.1);
+        position: relative;
+        color: #4e535a;
+      }
+      #grave .stone b { display: block; margin-top: 28px; font-size: 15px; letter-spacing: 1px; }
+      #grave .stone span { display: block; margin-top: 5px; font-size: 11px; }
+      #grave .base {
+        width: 118px; height: 13px; margin: 0 auto;
+        background: #7d838c; border-radius: 4px;
+      }
+      #grave .flowers { font-size: 15px; margin-top: -14px; letter-spacing: 68px; }
     </style>
   </head>
   <body>
-    <canvas id="stage" width="220" height="300"></canvas>
+    <div id="stage">
+      <div id="scene"></div>
+      <div id="pet">
+        <canvas id="sheet" width="220" height="220"></canvas>
+        <div id="rig"></div>
+      </div>
+      <div id="hat"></div>
+      <div id="mark"></div>
+      <div id="grave">
+        <div class="stone"><b>R.I.P</b><span id="graveName"></span></div>
+        <div class="base"></div>
+        <div class="flowers">🌼🌼</div>
+      </div>
+      <div id="bubble"><img id="portrait" alt="" /><span id="bubbleText"></span></div>
+    </div>
     <script src="renderer.js"></script>
   </body>
 </html>

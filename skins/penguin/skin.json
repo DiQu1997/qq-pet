@@ -1,0 +1,40 @@
+{
+  "id": "penguin",
+  "displayName": "QQ企鹅",
+  "credit": "素材:QQpet-codex(官方 QGG SWF 转 PNG)· 腾讯版权 · 仅供个人学习怀旧",
+  "renderer": "sheet",
+  "scale": 0.72,
+  "terms": {
+    "species": "企鹅",
+    "island": "企鹅岛",
+    "communityTitle": "🏝️ 企鹅岛 · 宠物社区",
+    "idleHint": "在企鹅岛上逛逛吧~",
+    "maleLabel": "红围巾GG",
+    "femaleLabel": "粉围巾MM",
+    "matchmaker": "企鹅红娘 · 待嫁待娶",
+    "churchTitle": "风语广场教堂",
+    "defaultName": "Q宝"
+  },
+  "sheet": {
+    "file": "spritesheet.png",
+    "frameWidth": 192,
+    "frameHeight": 208,
+    "animations": {
+      "idle": { "row": 0, "frames": 6, "fps": 6, "loop": true },
+      "walkLeft": { "row": 1, "frames": 8, "fps": 10, "loop": true },
+      "walkRight": { "row": 2, "frames": 8, "fps": 10, "loop": true },
+      "sing": { "row": 3, "frames": 4, "fps": 6, "loop": true },
+      "struggle": { "row": 4, "frames": 5, "fps": 10, "loop": true },
+      "tumble": { "row": 5, "frames": 8, "fps": 14, "loop": false },
+      "sleep": { "row": 6, "frames": 6, "fps": 4, "loop": true },
+      "dance": { "row": 7, "frames": 6, "fps": 8, "loop": true },
+      "mail": { "row": 8, "frames": 8, "fps": 8, "loop": false }
+    }
+  },
+  "npcs": [
+    { "id": "npc_lili", "name": "莉莉", "gender": "QMM", "level": 16, "icon": "🎀", "personality": "温柔的粉围巾企鹅,喜欢音乐" },
+    { "id": "npc_taotao", "name": "涛涛", "gender": "QGG", "level": 18, "icon": "⚽", "personality": "阳光的红围巾企鹅,运动健将" },
+    { "id": "npc_bingbing", "name": "冰冰", "gender": "QMM", "level": 22, "icon": "📚", "personality": "高冷学霸企鹅,大学毕业" },
+    { "id": "npc_dudu", "name": "嘟嘟", "gender": "QGG", "level": 15, "icon": "🍰", "personality": "贪吃的小企鹅,爱睡觉" }
+  ]
+}

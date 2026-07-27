@@ -1,0 +1,112 @@
+{
+  "id": "snorlax",
+  "displayName": "卡比兽",
+  "credit": "形象素材:PokeAPI/sprites(Dream World 矢量图)· 表情立绘:PMDCollab/SpriteCollab CC BY-NC 4.0(原作 CHUNSOFT)· 宝可梦为任天堂/Game Freak 版权 · 仅供个人学习怀旧",
+  "renderer": "rig",
+  "scale": 0.3,
+  "terms": {
+    "species": "卡比兽",
+    "island": "困困森林",
+    "communityTitle": "🌲 困困森林 · 宠物社区",
+    "idleHint": "在困困森林里逛逛吧~",
+    "maleLabel": "男孩子",
+    "femaleLabel": "女孩子",
+    "matchmaker": "森林红娘 · 待嫁待娶",
+    "churchTitle": "林间小教堂",
+    "defaultName": "困困"
+  },
+  "rig": {
+    "file": "snorlax.svg",
+    "width": 525,
+    "height": 421,
+    "headFollow": 0.45,
+    "pivots": {
+      "head": [
+        264,
+        169
+      ],
+      "armL": [
+        129,
+        173
+      ],
+      "armR": [
+        393,
+        171
+      ],
+      "body": [
+        262,
+        418
+      ],
+      "footL": [
+        100,
+        298
+      ],
+      "footR": [
+        428,
+        293
+      ]
+    },
+    "children": [
+      "head",
+      "armL",
+      "armR",
+      "footL",
+      "footR"
+    ]
+  },
+  "portraits": {
+    "dir": "portraits",
+    "map": {
+      "joyous": "Joyous.png",
+      "happy": "Happy.png",
+      "normal": "Normal.png",
+      "sad": "Sad.png",
+      "crying": "Crying.png",
+      "worried": "Worried.png",
+      "pain": "Pain.png",
+      "dizzy": "Dizzy.png",
+      "sigh": "Sigh.png",
+      "determined": "Determined.png",
+      "inspired": "Inspired.png",
+      "surprised": "Surprised.png",
+      "angry": "Angry.png",
+      "stunned": "Stunned.png",
+      "shouting": "Shouting.png",
+      "tearyEyed": "Teary-Eyed.png"
+    }
+  },
+  "npcs": [
+    {
+      "id": "npc_huhu",
+      "name": "呼呼",
+      "gender": "QMM",
+      "level": 16,
+      "icon": "😴",
+      "personality": "一天睡二十小时的卡比兽,梦话很多"
+    },
+    {
+      "id": "npc_yuangun",
+      "name": "圆滚",
+      "gender": "QGG",
+      "level": 18,
+      "icon": "🍙",
+      "personality": "食量惊人,把树林里的果子吃光过一次"
+    },
+    {
+      "id": "npc_meimei",
+      "name": "莓莓",
+      "gender": "QMM",
+      "level": 22,
+      "icon": "🍓",
+      "personality": "会挑最甜的果子,森林里公认的美食家"
+    },
+    {
+      "id": "npc_dawei",
+      "name": "大胃",
+      "gender": "QGG",
+      "level": 15,
+      "icon": "🍖",
+      "personality": "憨憨的大块头,睡醒第一件事是找吃的"
+    }
+  ]
+}

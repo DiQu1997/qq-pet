@@ -192,6 +192,8 @@ export interface GameConfig {
     freeConsult: boolean;
   };
   bubbles: Record<string, string[]>;
+  /** 皮肤注入的术语表(物种名、地名、性别称呼等) */
+  terms?: Record<string, string>;
 }
 
 export interface Sickness {

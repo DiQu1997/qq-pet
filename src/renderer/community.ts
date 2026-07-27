@@ -2,6 +2,8 @@ const $c = (id: string) => document.getElementById(id)!;
 
 let cfg: any = null;
 let snap: any = null;
+let skin: any = null;
+const T = (k: string, fb = "") => skin?.terms?.[k] ?? fb;
 let activeTab = "status";
 
 const TABS = [
@@ -22,14 +24,14 @@ const BANNERS: Record<string, { icon: string; title: string; sub: string }> = {
   status: { icon: "🐧", title: "宠物名片", sub: "宝贝的全部家当都在这儿了" },
   shop: { icon: "🛒", title: "便利商城", sub: "粮店 1 元宝≈18 点饥饿,洗护 1 元宝≈36 点清洁,买了直接用在宝贝身上" },
   hospital: { icon: "🏥", title: "宠物医院", sub: "先挂号确诊,才能对症下药 —— 乱吃药会让病情加重!" },
-  school: { icon: "🏫", title: "企鹅岛学校", sub: "上学涨三围、发文凭解锁高薪工作。上课时心情封顶 900" },
+  school: { icon: "🏫", title: "宠物学校", sub: "上学涨三围、发文凭解锁高薪工作。上课时心情封顶 900" },
   work: { icon: "💼", title: "打工街", sub: "打工时心情封顶 600、消耗加大,每天最多干 8 小时,超时宝贝要罢工" },
-  church: { icon: "⛪", title: "风语广场教堂", sub: "戒指越贵爱情值越高,将来蛋越多、后代越强" },
+  church: { icon: "⛪", title: "教堂", sub: "戒指越贵爱情值越高,将来蛋越多、后代越强" },
   travel: { icon: "🧳", title: "宠物旅游", sub: "旅游期间心情每分钟 +5,路上有宝箱、奇遇和小客人" },
   welfare: { icon: "🎁", title: "福利站", sub: "每天来白拿一份,周末还有额外的好东西" },
   games: { icon: "🎮", title: "游乐场", sub: "玩游戏赚元宝,还能顺便涨心情" },
   outfit: { icon: "👒", title: "瓦里步行街 · 名品城", sub: "买下的装扮会真的穿在桌面上的宝贝身上" },
-  pink: { icon: "💎", title: "粉钻贵族", sub: "做尊贵的企鹅,养宠从此不费心" },
+  pink: { icon: "💎", title: "粉钻贵族", sub: "做尊贵的宠物,养宠从此不费心" },
 };
 
 function esc(s: any): string {
@@ -108,7 +110,7 @@ function renderHud(): string {
       <div class="track"><i class="${cls}" style="width:${Math.max(0, Math.min(100, (val / max) * 100))}%"></i></div>
     </div>`;
   return `<div class="hud">
-    <div class="avatar"></div>
+    <div class="avatar" style="${avatarStyle()}"></div>
     <div class="hud-main">
       <div class="hud-name">
         <span>${esc(s.name)}</span>
@@ -128,6 +130,28 @@ function renderHud(): string {
     ${snap.isPink ? `<div class="badge-pink">💎 粉钻</div>` : ""}
     <div class="coin">💰 ${s.yuanbao}</div>
   </div>`;
+}
+
+/** 头像:rig 皮肤用情绪立绘,sheet 皮肤裁精灵图首帧 */
+function avatarStyle(): string {
+  if (!skin) return "";
+  const base = `skins/${skin.id}`;
+  if (skin.portraits) {
+    const st = snap.state;
+    const m = st.mood ?? 0;
+    const key = st.dead ? "dizzy" : st.sickness ? "pain" : st.dnd ? "sigh"
+      : m >= 900 ? "joyous" : m >= 700 ? "happy" : m >= 400 ? "normal" : m >= 200 ? "sad" : "crying";
+    const f = skin.portraits.map[key] ?? skin.portraits.map.normal;
+    return `background-image:url('${base}/${skin.portraits.dir}/${f}');background-size:contain;` +
+           `image-rendering:pixelated;width:52px;height:52px;border-radius:12px`;
+  }
+  if (skin.sheet) {
+    const k = 52 / skin.sheet.frameHeight;
+    return `background-image:url('${base}/${skin.sheet.file}');` +
+           `background-size:${(skin.sheet.frameWidth * 8 * k).toFixed(0)}px auto;` +
+           `background-position:0 0;width:${(skin.sheet.frameWidth * k).toFixed(0)}px;height:52px`;
+  }
+  return "";
 }
 
 function banner(id: string): string {
@@ -237,7 +261,7 @@ function renderHospital(): string {
         icon: "🪦",
         title: "埋葬",
         tags: [greyTag("不可撤销")],
-        desc: "清空等级、成长、元宝和所有物品,重新领养一只全新的企鹅宝贝",
+        desc: `清空等级、成长、元宝和所有物品,重新领养一只全新的${T("species","宠物")}宝贝`,
         action: btn("含泪埋葬", "act('bury')"),
       })}
     </div>`;
@@ -520,7 +544,7 @@ function renderChurch(): string {
       return card({
         icon: n.icon,
         title: n.name,
-        tags: [greyTag(n.gender === "QGG" ? "红围巾 GG" : "粉围巾 MM"), greyTag(`Lv.${n.level}`)],
+        tags: [greyTag(n.gender === "QGG" ? T("maleLabel","男孩") : T("femaleLabel","女孩")), greyTag(`Lv.${n.level}`)],
         desc: n.personality,
         req: !lvOk ? `需要 Lv.${m.minLevel} 才能结婚` : myRings.length ? undefined : "先去珠宝店备一枚戒指",
         reqWarn: !lvOk || !myRings.length,
@@ -531,7 +555,7 @@ function renderChurch(): string {
     .join("");
   return `${banner("church")}
   ${section("💍", "珠宝店")}<div class="grid">${rings}</div>
-  ${section("💌", "企鹅红娘 · 待嫁待娶")}<div class="grid">${candidates}</div>`;
+  ${section("💌", T("matchmaker","红娘 · 待嫁待娶"))}<div class="grid">${candidates}</div>`;
 }
 
 function renderTravel(): string {
@@ -747,7 +771,13 @@ window.qqpet.onGotoTab((tab) => {
 $c("close").onclick = () => window.qqpet.closeWindow();
 
 (async () => {
+  skin = await window.qqpet.requestSkin();
   cfg = await window.qqpet.requestConfig();
+  const tb = document.querySelector(".titlebar span");
+  if (tb) tb.textContent = T("communityTitle", "🏝️ 宠物社区");
+  const st = document.createElement("style");
+  st.textContent = `#msg:empty::before{content:"${T("idleHint", "四处逛逛吧~")}"}`;
+  document.head.appendChild(st);
   snap = await window.qqpet.requestSnapshot();
   render();
 })();

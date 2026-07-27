@@ -1,198 +1,214 @@
-interface AnimDef {
+import { RigRenderer, type RigSpec } from "./rig";
+
+interface SheetAnim {
   row: number;
   frames: number;
   fps: number;
   loop: boolean;
 }
-interface SpriteMeta {
-  sheet: string;
-  frameWidth: number;
-  frameHeight: number;
-  animations: Record<string, AnimDef>;
+interface Skin {
+  id: string;
+  displayName: string;
+  renderer: "sheet" | "rig";
+  scale: number;
+  terms: Record<string, string>;
+  sheet?: {
+    file: string;
+    frameWidth: number;
+    frameHeight: number;
+    animations: Record<string, SheetAnim>;
+  };
+  rig?: RigSpec;
+  portraits?: { dir: string; map: Record<string, string> };
 }
 
-const canvas = document.getElementById("stage") as HTMLCanvasElement;
+const $ = <T extends HTMLElement = HTMLElement>(id: string) =>
+  document.getElementById(id) as T;
+
+const stage = $("stage");
+const petBox = $("pet");
+const canvas = $<HTMLCanvasElement>("sheet");
+const rigBox = $("rig");
+const bubbleEl = $("bubble");
+const graveEl = $("grave");
+const hatEl = $("hat");
+const markEl = $("mark");
+const sceneEl = $("scene");
+const portraitEl = $<HTMLImageElement>("portrait");
+const bubbleTextEl = $("bubbleText");
+
+let skin: Skin | null = null;
+let outfits: any[] = [];
+let snap: any = null;
+let rig: RigRenderer | null = null;
+
+// sheet 后端状态
 const ctx = canvas.getContext("2d")!;
-
-const sheet = new Image();
-let meta: SpriteMeta | null = null;
-
+const sheetImg = new Image();
 let current = "idle";
 let frame = 0;
 let lastFrameAt = 0;
-let bubbleText = "";
-let bubbleUntil = 0;
-let snap: any = null;
-let outfits: any[] = [];
-
-const PET_SCALE = 0.72;
 let petW = 138;
 let petH = 150;
-let petX = 0;
-let petY = 0;
 
+let bubbleTimer: ReturnType<typeof setTimeout> | null = null;
+
+// ---------- 初始化 ----------
 async function init() {
-  meta = await fetch("assets/sprites.json").then((r) => r.json());
+  const sk: Skin = await window.qqpet.requestSkin();
+  skin = sk;
   const cfg = await window.qqpet.requestConfig();
   outfits = cfg.outfits ?? [];
-  petW = Math.round(meta!.frameWidth * PET_SCALE);
-  petH = Math.round(meta!.frameHeight * PET_SCALE);
-  petX = Math.round((canvas.width - petW) / 2);
-  petY = canvas.height - petH;
-  sheet.src = "assets/" + meta!.sheet;
+
+  if (sk.renderer === "rig" && sk.rig) {
+    canvas.style.display = "none";
+    const svgText = await fetch(`skins/${sk.id}/${sk.rig.file}`).then((r) => r.text());
+    rig = new RigRenderer(sk.rig, sk.scale);
+    await rig.mount(rigBox, svgText);
+    petW = rig.size.w;
+    petH = rig.size.h;
+  } else if (sk.sheet) {
+    rigBox.style.display = "none";
+    petW = Math.round(sk.sheet.frameWidth * sk.scale);
+    petH = Math.round(sk.sheet.frameHeight * sk.scale);
+    canvas.width = petW;
+    canvas.height = petH;
+    sheetImg.src = `skins/${sk.id}/${sk.sheet.file}`;
+  }
+  positionOverlays();
   requestAnimationFrame(loop);
+}
+
+/** 覆盖层(帽子/标记/立绘/场景)按当前宠物尺寸摆位 */
+function positionOverlays() {
+  const cx = stage.clientWidth / 2;
+  const bottom = 0;
+  hatEl.style.bottom = `${bottom + petH - 26}px`;
+  markEl.style.left = `${cx + petW / 2 - 16}px`;
+  markEl.style.bottom = `${bottom + petH - 34}px`;
+  sceneEl.style.width = `${petW * 1.08}px`;
+  sceneEl.style.height = `${petH * 0.92}px`;
 }
 
 function setAnim(name: string) {
   if (name === current) return;
-  // 伪动画:dead(坟墓)/tumble_hold(趴地不动)由绘制层处理
   current = name;
   frame = 0;
   lastFrameAt = 0;
+  if (rig) rig.setAnim(name, performance.now());
 }
 
-function drawBubble(text: string) {
-  ctx.font = "13px 'PingFang SC', sans-serif";
-  const padding = 8;
-  const maxW = canvas.width - 16;
-  const w = Math.min(ctx.measureText(text).width + padding * 2, maxW);
-  const h = 26;
-  const x = (canvas.width - w) / 2;
-  const y = 8;
-  ctx.fillStyle = "rgba(255,255,255,0.92)";
-  ctx.strokeStyle = "#f5a0b9";
-  ctx.lineWidth = 1.5;
-  ctx.beginPath();
-  ctx.roundRect(x, y, w, h, 10);
-  ctx.fill();
-  ctx.stroke();
-  ctx.beginPath();
-  ctx.moveTo(canvas.width / 2 - 5, y + h);
-  ctx.lineTo(canvas.width / 2 + 5, y + h);
-  ctx.lineTo(canvas.width / 2, y + h + 7);
-  ctx.closePath();
-  ctx.fill();
-  ctx.stroke();
-  ctx.fillStyle = "#5a3e48";
-  ctx.textAlign = "center";
-  ctx.textBaseline = "middle";
-  ctx.fillText(text, canvas.width / 2, y + h / 2, maxW - padding * 2);
-}
-
-function drawTombstone() {
-  const cx = canvas.width / 2;
-  const baseY = canvas.height - 20;
-  ctx.fillStyle = "#9aa0a8";
-  ctx.beginPath();
-  ctx.roundRect(cx - 45, baseY - 110, 90, 110, [45, 45, 4, 4]);
-  ctx.fill();
-  ctx.fillStyle = "#7d838c";
-  ctx.beginPath();
-  ctx.roundRect(cx - 58, baseY - 12, 116, 14, 4);
-  ctx.fill();
-  ctx.fillStyle = "#5a5f66";
-  ctx.font = "bold 16px 'PingFang SC', sans-serif";
-  ctx.textAlign = "center";
-  ctx.fillText("R.I.P", cx, baseY - 80);
-  ctx.font = "12px 'PingFang SC', sans-serif";
-  ctx.fillText(snap?.state?.name ?? "", cx, baseY - 58);
-  ctx.font = "18px sans-serif";
-  ctx.fillText("🌼", cx - 40, baseY - 4);
-  ctx.fillText("🌼", cx + 40, baseY - 4);
-}
-
-function drawScene() {
-  const sceneId = snap?.state?.outfit?.scene;
-  if (!sceneId) return;
-  const o = outfits.find((x) => x.id === sceneId);
-  if (!o?.color) return;
-  ctx.save();
-  ctx.globalAlpha = 0.35;
-  ctx.fillStyle = o.color;
-  ctx.beginPath();
-  ctx.ellipse(canvas.width / 2, petY + petH * 0.62, petW * 0.78, petH * 0.66, 0, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.restore();
-}
-
-function drawHat() {
-  const hatId = snap?.state?.outfit?.hat;
-  if (!hatId || snap?.state?.dead) return;
-  const o = outfits.find((x) => x.id === hatId);
-  if (!o?.emoji) return;
-  ctx.font = "34px sans-serif";
-  ctx.textAlign = "center";
-  // 帽子戴在头顶,随待机帧轻微浮动
-  const bob = Math.sin(Date.now() / 300) * 2;
-  ctx.fillText(o.emoji, canvas.width / 2 + 6, petY + 26 + bob);
-}
-
-function drawSickMark() {
-  if (!snap?.state?.sickness || snap?.state?.dead) return;
-  ctx.font = "22px sans-serif";
-  ctx.textAlign = "center";
-  const pulse = Math.sin(Date.now() / 250) * 3;
-  ctx.fillText("🤒", canvas.width / 2 + petW / 2 - 8, petY + 30 + pulse);
-}
-
-function loop(t: number) {
-  if (!meta) return;
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-  if (snap?.state?.dead) {
-    drawTombstone();
-    if (bubbleText && Date.now() < bubbleUntil) drawBubble(bubbleText);
-    requestAnimationFrame(loop);
-    return;
-  }
-
+// ---------- 绘制 ----------
+function drawSheet(t: number) {
+  const s = skin?.sheet;
+  if (!s) return;
   let animName = current;
-  let holdLastFrame = false;
+  let hold = false;
   if (animName === "dead") animName = "idle";
   if (animName === "tumble_hold") {
     animName = "tumble";
-    holdLastFrame = true;
+    hold = true;
   }
-  const def = meta.animations[animName] ?? meta.animations.idle;
+  const def = s.animations[animName] ?? s.animations.idle;
   if (!lastFrameAt) lastFrameAt = t;
   if (t - lastFrameAt >= 1000 / def.fps) {
     lastFrameAt = t;
-    if (holdLastFrame) frame = def.frames - 1;
+    if (hold) frame = def.frames - 1;
     else if (frame < def.frames - 1) frame++;
     else if (def.loop) frame = 0;
   }
-
-  drawScene();
-  if (sheet.complete) {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  if (sheetImg.complete) {
     ctx.imageSmoothingEnabled = true;
     ctx.drawImage(
-      sheet,
-      Math.min(frame, def.frames - 1) * meta.frameWidth,
-      def.row * meta.frameHeight,
-      meta.frameWidth,
-      meta.frameHeight,
-      petX,
-      petY,
+      sheetImg,
+      Math.min(frame, def.frames - 1) * s.frameWidth,
+      def.row * s.frameHeight,
+      s.frameWidth,
+      s.frameHeight,
+      0,
+      0,
       petW,
       petH,
     );
   }
-  drawHat();
-  drawSickMark();
-  if (bubbleText && Date.now() < bubbleUntil) drawBubble(bubbleText);
+}
+
+function loop(t: number) {
+  if (rig) rig.draw(t);
+  else drawSheet(t);
   requestAnimationFrame(loop);
 }
 
+// ---------- 状态同步 ----------
+/** 心情/病情 → 情绪立绘 key */
+function emotionOf(s: any): string {
+  if (!s) return "normal";
+  if (s.dead) return "dizzy";
+  if (s.sickness) return "pain";
+  if (s.dnd) return "sigh";
+  if (s.activity?.type === "work") return "determined";
+  if (s.activity?.type === "travel") return "inspired";
+  if (s.activity?.type === "school") return "normal";
+  const m = s.mood ?? 0;
+  if (m >= 900) return "joyous";
+  if (m >= 700) return "happy";
+  if (m >= 400) return "normal";
+  if (m >= 200) return "sad";
+  return "crying";
+}
+
+function applySnapshot(s: any) {
+  snap = s;
+  const st = s.state;
+
+  // 死亡 → 坟墓
+  const dead = !!st.dead;
+  graveEl.style.display = dead ? "block" : "none";
+  petBox.classList.toggle("hidden", dead);
+  hatEl.style.display = dead ? "none" : "block";
+  if (dead) $("graveName").textContent = st.name;
+
+  // 装扮
+  const hat = outfits.find((o) => o.id === st.outfit?.hat);
+  hatEl.textContent = hat?.emoji ?? "";
+  const scene = outfits.find((o) => o.id === st.outfit?.scene);
+  sceneEl.style.background = scene?.color ?? "transparent";
+
+  // 病态标记
+  markEl.textContent = st.sickness && !dead ? "🤒" : "";
+
+}
+
+function showBubble(text: string) {
+  if (!text) return;
+  // 有立绘的皮肤:气泡里带上当前情绪的脸
+  if (skin?.portraits && snap?.state) {
+    const key = emotionOf(snap.state);
+    const file = skin.portraits.map[key] ?? skin.portraits.map.normal;
+    portraitEl.src = `skins/${skin.id}/${skin.portraits.dir}/${file}`;
+    portraitEl.style.display = "block";
+  }
+  bubbleTextEl.textContent = text;
+  bubbleEl.classList.add("show");
+  if (bubbleTimer) clearTimeout(bubbleTimer);
+  bubbleTimer = setTimeout(() => bubbleEl.classList.remove("show"), 3800);
+}
+
 // ---------- 交互 ----------
+function inPet(e: MouseEvent): boolean {
+  const cx = stage.clientWidth / 2;
+  return (
+    Math.abs(e.offsetX - cx) <= petW / 2 + 6 &&
+    e.offsetY >= stage.clientHeight - petH - 12
+  );
+}
+
 let downPos = { x: 0, y: 0 };
 let draggingNow = false;
 let clickTimer: ReturnType<typeof setTimeout> | null = null;
 
-function inPet(e: MouseEvent): boolean {
-  return e.offsetX >= petX && e.offsetX <= petX + petW && e.offsetY >= petY - 10;
-}
-
-canvas.addEventListener("mousedown", (e) => {
+stage.addEventListener("mousedown", (e) => {
   if (e.button === 2 || !inPet(e)) return;
   downPos = { x: e.screenX, y: e.screenY };
   const onMove = (me: MouseEvent) => {
@@ -213,16 +229,15 @@ canvas.addEventListener("mousedown", (e) => {
   window.addEventListener("mouseup", onUp);
 });
 
-canvas.addEventListener("click", (e) => {
-  if (draggingNow || !inPet(e)) return;
-  if (clickTimer) return;
+stage.addEventListener("click", (e) => {
+  if (draggingNow || !inPet(e) || clickTimer) return;
   clickTimer = setTimeout(() => {
     clickTimer = null;
     window.qqpet.petClick();
   }, 220);
 });
 
-canvas.addEventListener("dblclick", (e) => {
+stage.addEventListener("dblclick", (e) => {
   if (!inPet(e)) return;
   if (clickTimer) {
     clearTimeout(clickTimer);
@@ -231,19 +246,14 @@ canvas.addEventListener("dblclick", (e) => {
   window.qqpet.petDoubleClick();
 });
 
-canvas.addEventListener("contextmenu", (e) => {
+stage.addEventListener("contextmenu", (e) => {
   e.preventDefault();
   window.qqpet.petMenu();
 });
 
-window.qqpet.onAnim((name) => setAnim(name));
-window.qqpet.onBubble((text) => {
-  bubbleText = text;
-  bubbleUntil = Date.now() + 3800;
-});
-window.qqpet.onSnapshot((s) => {
-  snap = s;
-});
+window.qqpet.onAnim(setAnim);
+window.qqpet.onBubble(showBubble);
+window.qqpet.onSnapshot(applySnapshot);
 
 init();
 

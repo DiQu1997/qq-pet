@@ -38,13 +38,31 @@ function logLine(msg: string): void {
 process.on("uncaughtException", (err) => logLine(`uncaughtException: ${err.stack ?? err}`));
 process.on("unhandledRejection", (reason) => logLine(`unhandledRejection: ${reason}`));
 
+let skin: any = null;
+
+function skinDir(): string {
+  return join(__dirname, "skins", skin.id);
+}
+
+/** 读 config,再按 config.skin 载入皮肤,把术语表与 NPC 合并进 config */
 function loadConfig(): GameConfig {
-  return JSON.parse(readFileSync(join(__dirname, "config.json"), "utf-8"));
+  const cfg = JSON.parse(readFileSync(join(__dirname, "config.json"), "utf-8"));
+  const id = cfg.skin ?? "penguin";
+  try {
+    skin = JSON.parse(readFileSync(join(__dirname, "skins", id, "skin.json"), "utf-8"));
+  } catch (e) {
+    logLine(`skin "${id}" 载入失败,回退 penguin: ${e}`);
+    skin = JSON.parse(readFileSync(join(__dirname, "skins", "penguin", "skin.json"), "utf-8"));
+  }
+  cfg.terms = skin.terms;
+  if (skin.npcs) cfg.marriage.npcs = skin.npcs;
+  logLine(`skin loaded: ${skin.id} (${skin.renderer})`);
+  return cfg;
 }
 
 /** 老存档升级:用 newPet 的默认值兜底新字段 */
 function migrate(config: GameConfig, saved: Partial<PetState>): PetState {
-  const base = PetEngine.newPet(config, "Q宝", "QGG", Date.now());
+  const base = PetEngine.newPet(config, skin?.terms?.defaultName ?? "Q宝", "QGG", Date.now());
   return {
     ...base,
     ...saved,
@@ -64,7 +82,7 @@ function loadOrAdopt(config: GameConfig): PetState {
       logLine(`save corrupted, re-adopting: ${e}`);
     }
   }
-  return PetEngine.newPet(config, "Q宝", "QGG", Date.now());
+  return PetEngine.newPet(config, skin?.terms?.defaultName ?? "Q宝", "QGG", Date.now());
 }
 
 function save(): void {
@@ -377,11 +395,11 @@ async function buryFlow(): Promise<void> {
     cancelId: 0,
   });
   if (r.response === 1) {
-    engine.state = PetEngine.newPet(engine.config, "Q宝", engine.state.gender, Date.now());
+    engine.state = PetEngine.newPet(engine.config, skin?.terms?.defaultName ?? "Q宝", engine.state.gender, Date.now());
     save();
     pushSnapshot();
     anim("sing");
-    bubble("新的企鹅宝贝来啦!这次要好好照顾我哦~");
+    bubble(`新的${skin.terms.species}宝贝来啦!这次要好好照顾我哦~`);
     setTimeout(() => anim(idleAnim()), 2500);
   }
 }
@@ -407,15 +425,26 @@ async function hatchFlow(): Promise<{ ok: boolean; message: string }> {
   save();
   pushSnapshot();
   anim("sing");
-  bubble(`二代宝贝「${engine.state.name}」破壳而出!(${gender === "QGG" ? "红围巾GG" : "粉围巾MM"})`);
+  bubble(`二代宝贝「${engine.state.name}」破壳而出!(${gender === "QGG" ? skin.terms.maleLabel : skin.terms.femaleLabel})`);
   return { ok: true, message: "孵化成功!" };
 }
 
 function createTray(): void {
-  const sheet = nativeImage.createFromPath(join(__dirname, "assets", "spritesheet.png"));
-  const icon = sheet.crop({ x: 0, y: 0, width: 192, height: 208 }).resize({ height: 20 });
+  let icon: Electron.NativeImage;
+  if (skin.sheet) {
+    icon = nativeImage
+      .createFromPath(join(skinDir(), skin.sheet.file))
+      .crop({ x: 0, y: 0, width: skin.sheet.frameWidth, height: skin.sheet.frameHeight })
+      .resize({ height: 20 });
+  } else if (skin.portraits) {
+    icon = nativeImage
+      .createFromPath(join(skinDir(), skin.portraits.dir, skin.portraits.map.normal))
+      .resize({ height: 20 });
+  } else {
+    icon = nativeImage.createEmpty();
+  }
   tray = new Tray(icon);
-  tray.setToolTip("QQ宠物");
+  tray.setToolTip(`${skin.displayName} · 宠物`);
   tray.on("click", () => {
     if (petWin?.isVisible()) petWin.hide();
     else {
@@ -643,6 +672,7 @@ ipcMain.handle("action", (_e, kind: string, id?: string, extra?: string) => {
 });
 ipcMain.handle("get-snapshot", () => engine.snapshot(Date.now()));
 ipcMain.handle("get-config", () => engine.config);
+ipcMain.handle("get-skin", () => skin);
 ipcMain.on("close-window", (e) => BrowserWindow.fromWebContents(e.sender)?.close());
 ipcMain.on("open-game", (_e, page: "battle" | "maze") => openGame(page));
 

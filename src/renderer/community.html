@@ -148,10 +148,8 @@
       .avatar {
         width: 50px; height: 54px;
         flex-shrink: 0;
-        background-image: url("assets/spritesheet.png");
-        background-size: 400px 487px;
-        background-position: 0 0;
         background-repeat: no-repeat;
+        background-position: center;
       }
       .hud-main { flex: 1; min-width: 0; }
       .hud-name {
@@ -419,7 +417,7 @@
         border-top: 2px solid var(--accent);
       }
       #msg:empty::before {
-        content: "在企鹅岛上逛逛吧~";
+        content: "";
         color: var(--ink-soft);
         font-weight: 400;
       }
@@ -433,7 +431,7 @@
   </head>
   <body>
     <div class="titlebar">
-      <span>🏝️ 企鹅岛 · 宠物社区</span>
+      <span>🏝️ 宠物社区</span>
       <button class="close" id="close">×</button>
     </div>
     <div class="layout">

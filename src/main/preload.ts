@@ -19,6 +19,7 @@ contextBridge.exposeInMainWorld("qqpet", {
     ipcRenderer.invoke("action", kind, id, extra),
   requestSnapshot: () => ipcRenderer.invoke("get-snapshot"),
   requestConfig: () => ipcRenderer.invoke("get-config"),
+  requestSkin: () => ipcRenderer.invoke("get-skin"),
   closeWindow: () => ipcRenderer.send("close-window"),
   openGame: (page: string) => ipcRenderer.send("open-game", page),
 });

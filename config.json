@@ -1,5 +1,6 @@
 {
   "//": "所有游戏数值,来源见 deep_research/qq宠物1比1复刻功能规格.md;单位:属性点/分钟,金额:元宝。timeScale>1 可加速时间(测试用)",
+  "skin": "penguin",
   "timeScale": 1,
   "decay": {
     "hungerPerMin": 2,

@@ -84,6 +84,11 @@ export class PetEngine {
     };
   }
 
+  /** 物种名(由皮肤术语表提供,缺省"宠物") */
+  private get species(): string {
+    return (this.config as any).terms?.species ?? "宠物";
+  }
+
   // ---------- 派生 ----------
   get level(): number {
     let lv = 0;
@@ -538,7 +543,7 @@ export class PetEngine {
     if (this.rng() < c.guestChance) {
       const guest = npcs[Math.floor(this.rng() * npcs.length)];
       this.addMood(100);
-      events.push(`带回了小客人「${guest.name}」来串门,两只企鹅玩得很开心(心情+100)`);
+      events.push(`带回了小客人「${guest.name}」来串门,两只${this.species}玩得很开心(心情+100)`);
     }
     events.unshift(report);
     return events;
@@ -629,7 +634,7 @@ export class PetEngine {
     const price = this.shopPrice(ring.price, now);
     if (!this.spend(price)) return { ok: false, message: `${ring.name}要 ${price} 元宝,钱不够` };
     this.state.inventory[ringId] = (this.state.inventory[ringId] ?? 0) + 1;
-    return { ok: true, message: `买下了${ring.name},祝有情企鹅终成眷属~` };
+    return { ok: true, message: `买下了${ring.name},祝有情${this.species}终成眷属~` };
   }
 
   propose(npcId: string, ringId: string): ActionResult {
@@ -639,7 +644,7 @@ export class PetEngine {
     if (this.state.marriage) return { ok: false, message: "宝贝已经结婚啦" };
     if (this.level < m.minLevel) return { ok: false, message: `${m.minLevel} 级才能结婚` };
     const npc = m.npcs.find((n) => n.id === npcId);
-    if (!npc) return { ok: false, message: "没有这只企鹅" };
+    if (!npc) return { ok: false, message: `没有这只${this.species}` };
     if (npc.gender === this.state.gender) return { ok: false, message: "王国的婚姻法规定要一只QGG和一只QMM哦" };
     const ring = m.rings.find((r) => r.id === ringId);
     if (!ring || (this.state.inventory[ringId] ?? 0) < 1)
