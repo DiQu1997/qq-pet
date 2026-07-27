@@ -8,7 +8,7 @@ import {
   screen,
   Tray,
 } from "electron";
-import { appendFileSync, readFileSync, writeFileSync, existsSync, mkdirSync } from "node:fs";
+import { appendFileSync, readdirSync, readFileSync, writeFileSync, existsSync, mkdirSync } from "node:fs";
 import { join } from "node:path";
 import { PetEngine } from "../core/engine";
 import type { GameConfig, PetState } from "../core/types";
@@ -40,24 +40,88 @@ process.on("unhandledRejection", (reason) => logLine(`unhandledRejection: ${reas
 
 let skin: any = null;
 
-function skinDir(): string {
-  return join(__dirname, "skins", skin.id);
+function skinDir(id = skin.id): string {
+  return join(__dirname, "skins", id);
 }
 
-/** 读 config,再按 config.skin 载入皮肤,把术语表与 NPC 合并进 config */
+/** 用户偏好(与 config.json 分开:config 是项目默认值,这里是本机选择,不进版本库) */
+const prefsPath = () => join(app.getPath("userData"), "prefs.json");
+function loadPrefs(): Record<string, any> {
+  try {
+    return JSON.parse(readFileSync(prefsPath(), "utf-8"));
+  } catch {
+    return {};
+  }
+}
+function savePrefs(patch: Record<string, any>): void {
+  try {
+    mkdirSync(app.getPath("userData"), { recursive: true });
+    writeFileSync(prefsPath(), JSON.stringify({ ...loadPrefs(), ...patch }, null, 2));
+  } catch (e) {
+    logLine(`prefs save failed: ${e}`);
+  }
+}
+
+function readSkin(id: string): any {
+  return JSON.parse(readFileSync(join(skinDir(id), "skin.json"), "utf-8"));
+}
+
+/** 扫 skins/ 目录列出所有可用皮肤 */
+function listSkins(): { id: string; displayName: string }[] {
+  try {
+    return readdirSync(join(__dirname, "skins"), { withFileTypes: true })
+      .filter((d) => d.isDirectory() && existsSync(join(__dirname, "skins", d.name, "skin.json")))
+      .map((d) => {
+        try {
+          return { id: d.name, displayName: readSkin(d.name).displayName ?? d.name };
+        } catch {
+          return null;
+        }
+      })
+      .filter((x): x is { id: string; displayName: string } => x !== null);
+  } catch {
+    return [];
+  }
+}
+
+/** 读 config,按「用户偏好 > config.skin」载入皮肤,把术语表与 NPC 合并进 config */
 function loadConfig(): GameConfig {
   const cfg = JSON.parse(readFileSync(join(__dirname, "config.json"), "utf-8"));
-  const id = cfg.skin ?? "penguin";
+  const id = loadPrefs().skin ?? cfg.skin ?? "penguin";
   try {
-    skin = JSON.parse(readFileSync(join(__dirname, "skins", id, "skin.json"), "utf-8"));
+    skin = readSkin(id);
   } catch (e) {
     logLine(`skin "${id}" 载入失败,回退 penguin: ${e}`);
-    skin = JSON.parse(readFileSync(join(__dirname, "skins", "penguin", "skin.json"), "utf-8"));
+    skin = readSkin("penguin");
   }
   cfg.terms = skin.terms;
   if (skin.npcs) cfg.marriage.npcs = skin.npcs;
   logLine(`skin loaded: ${skin.id} (${skin.renderer})`);
   return cfg;
+}
+
+/** 运行时换皮肤:换素材与文案,不动存档 */
+function applySkin(id: string): void {
+  if (id === skin.id) return;
+  let next: any;
+  try {
+    next = readSkin(id);
+  } catch (e) {
+    logLine(`切换皮肤 "${id}" 失败: ${e}`);
+    bubble("这个皮肤好像坏了……");
+    return;
+  }
+  skin = next;
+  engine.config.terms = skin.terms;
+  if (skin.npcs) engine.config.marriage.npcs = skin.npcs;
+  savePrefs({ skin: id });
+  logLine(`skin switched: ${id} (${skin.renderer})`);
+
+  tray?.setImage(trayIcon());
+  tray?.setToolTip(`${skin.displayName} · 宠物`);
+  // 重载窗口,渲染层会重新 requestSkin 拉到新素材
+  if (alive(petWin)) petWin.reload();
+  if (alive(communityWin)) communityWin.reload();
 }
 
 /** 老存档升级:用 newPet 的默认值兜底新字段 */
@@ -380,6 +444,15 @@ function buildMenu(): Menu {
     { label: "密室探险", click: () => openGame("maze") },
     { type: "separator" },
     { label: "免打扰模式", type: "checkbox", checked: s.dnd, enabled: !busy, click: () => doAction("dnd") },
+    {
+      label: "切换皮肤",
+      submenu: listSkins().map((sk) => ({
+        label: sk.displayName + (sk.id === skin.id ? "(当前)" : ""),
+        type: "radio" as const,
+        checked: sk.id === skin.id,
+        click: () => applySkin(sk.id),
+      })),
+    },
     { label: "隐藏宠物", click: () => petWin?.hide() },
     { type: "separator" },
     { label: "退出宠物", click: () => app.quit() },
@@ -429,21 +502,28 @@ async function hatchFlow(): Promise<{ ok: boolean; message: string }> {
   return { ok: true, message: "孵化成功!" };
 }
 
-function createTray(): void {
-  let icon: Electron.NativeImage;
-  if (skin.sheet) {
-    icon = nativeImage
-      .createFromPath(join(skinDir(), skin.sheet.file))
-      .crop({ x: 0, y: 0, width: skin.sheet.frameWidth, height: skin.sheet.frameHeight })
-      .resize({ height: 20 });
-  } else if (skin.portraits) {
-    icon = nativeImage
-      .createFromPath(join(skinDir(), skin.portraits.dir, skin.portraits.map.normal))
-      .resize({ height: 20 });
-  } else {
-    icon = nativeImage.createEmpty();
+/** 托盘图标:sheet 皮肤裁精灵图首帧,rig 皮肤用 Normal 立绘 */
+function trayIcon(): Electron.NativeImage {
+  try {
+    if (skin.sheet) {
+      return nativeImage
+        .createFromPath(join(skinDir(), skin.sheet.file))
+        .crop({ x: 0, y: 0, width: skin.sheet.frameWidth, height: skin.sheet.frameHeight })
+        .resize({ height: 20 });
+    }
+    if (skin.portraits) {
+      return nativeImage
+        .createFromPath(join(skinDir(), skin.portraits.dir, skin.portraits.map.normal))
+        .resize({ height: 20 });
+    }
+  } catch (e) {
+    logLine(`tray icon failed: ${e}`);
   }
-  tray = new Tray(icon);
+  return nativeImage.createEmpty();
+}
+
+function createTray(): void {
+  tray = new Tray(trayIcon());
   tray.setToolTip(`${skin.displayName} · 宠物`);
   tray.on("click", () => {
     if (petWin?.isVisible()) petWin.hide();

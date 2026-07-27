@@ -69,7 +69,10 @@ npm run build && open -n "$HOME/Library/Application Support/qq-pet-runtime/Elect
 
 ## 换角色(皮肤系统)
 
-改 `config.json` 里一行就能换主角:
+**右键桌宠(或右键托盘图标)→「切换皮肤」**,选一个即可,立即生效、不用重启、不动存档。
+选择记在 `~/Library/Application Support/qq-pet/prefs.json`,重启后保持。
+
+也可以改 `config.json` 的 `skin` 字段设默认皮肤(优先级:prefs.json > config.json > penguin):
 
 ```json
 { "skin": "penguin" }   // 或 "snorlax"
@@ -108,6 +111,7 @@ npm run build && open -n "$HOME/Library/Application Support/qq-pet-runtime/Elect
 - `skins/<id>/` — 皮肤包:skin.json(术语表/NPC/精灵图或骨骼定义/情绪立绘)+ 素材文件
 - `src/renderer/rig.ts` — 骨骼动画引擎(父子层级 + 体积守恒),rig 类皮肤共用
 - 存档:`~/Library/Application Support/qq-pet/save.json`;退出期间不成长也不会死(与原版一致)
+- 偏好:同目录 `prefs.json`(当前皮肤等本机设置,与项目默认值 `config.json` 分开)
 
 ## 已实现(M0~M7 全部落地)
 
@@ -144,6 +148,7 @@ npm run build && open -n "$HOME/Library/Application Support/qq-pet-runtime/Elect
 - skin.json 抽象:渲染后端(sheet/rig)、术语表、NPC、素材;`config.json` 改一行换角色
 - 骨骼动画引擎:SVG 切 6 部件、父子层级补偿、体积守恒挤压拉伸,矢量渲染零采样损失
 - 16 种情绪立绘按心情/病/死/活动自动切换,显示在气泡与社区 HUD
+- 托盘/右键菜单内置皮肤切换器(扫 `skins/` 目录),运行时热切换,选择存 prefs.json
 
 ## 后续可做
 
