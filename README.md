@@ -31,6 +31,12 @@ npm test
 npm run typecheck
 ```
 
+桌宠命中判定回归测试(在真实 Electron 里派发鼠标事件,验证单击/双击/右键/拖拽):
+
+```bash
+npm run hittest
+```
+
 ## 已知问题 · macOS 启动失败(Electron 被内核 SIGKILL)
 
 **症状**:`npm start` 或直接跑 Electron 立刻退出,报

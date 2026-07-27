@@ -196,11 +196,16 @@ function showBubble(text: string) {
 }
 
 // ---------- 交互 ----------
+/**
+ * 命中判定。必须用 clientX/clientY(视口坐标):监听挂在 #stage 上,
+ * 但事件是从子元素(canvas / svg / #pet)冒泡上来的,
+ * e.offsetX/Y 会相对那个子元素而不是 stage,导致判定永远落空。
+ */
 function inPet(e: MouseEvent): boolean {
   const cx = stage.clientWidth / 2;
   return (
-    Math.abs(e.offsetX - cx) <= petW / 2 + 6 &&
-    e.offsetY >= stage.clientHeight - petH - 12
+    Math.abs(e.clientX - cx) <= petW / 2 + 6 &&
+    e.clientY >= stage.clientHeight - petH - 12
   );
 }
 
@@ -211,10 +216,13 @@ let clickTimer: ReturnType<typeof setTimeout> | null = null;
 stage.addEventListener("mousedown", (e) => {
   if (e.button === 2 || !inPet(e)) return;
   downPos = { x: e.screenX, y: e.screenY };
+  // 抓取点相对窗口左上角的偏移,主进程据此把窗口跟着光标走
+  const grabX = e.clientX;
+  const grabY = e.clientY;
   const onMove = (me: MouseEvent) => {
     if (!draggingNow && Math.hypot(me.screenX - downPos.x, me.screenY - downPos.y) > 6) {
       draggingNow = true;
-      window.qqpet.dragStart(e.offsetX, e.offsetY);
+      window.qqpet.dragStart(grabX, grabY);
     }
   };
   const onUp = () => {
