@@ -9,6 +9,7 @@ interface QQPetBridge {
   petMenu(): void;
   dragStart(ox: number, oy: number): void;
   dragEnd(): void;
+  setInteractive(on: boolean): void;
   action(kind: string, id?: string, extra?: string): Promise<{ ok: boolean; message: string }>;
   requestSnapshot(): Promise<any>;
   requestConfig(): Promise<any>;

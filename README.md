@@ -31,7 +31,7 @@ npm test
 npm run typecheck
 ```
 
-桌宠命中判定回归测试(在真实 Electron 里派发鼠标事件,验证单击/双击/右键/拖拽):
+桌宠交互回归测试(在真实 Electron 里派发鼠标事件,验证单击/双击/右键/拖拽/鼠标穿透):
 
 ```bash
 npm run hittest
@@ -110,6 +110,8 @@ npm run build && open -n "$HOME/Library/Application Support/qq-pet-runtime/Elect
 - `src/renderer/` — 四个窗口:桌宠精灵动画+气泡(`renderer.ts`)、企鹅岛社区(`community.ts`,11 个标签页)、古堡战记(`battle.ts`)、密室探险(`maze.ts`)
 - `skins/<id>/` — 皮肤包:skin.json(术语表/NPC/精灵图或骨骼定义/情绪立绘)+ 素材文件
 - `src/renderer/rig.ts` — 骨骼动画引擎(父子层级 + 体积守恒),rig 类皮肤共用
+- 鼠标穿透:桌宠窗口(220×300)比宠物本身大,默认 `setIgnoreMouseEvents(true, {forward:true})`
+  让透明区不挡下层应用;渲染层靠 mousemove 判断光标是否压在宠物上,再通知主进程临时恢复可交互
 - 存档:`~/Library/Application Support/qq-pet/save.json`;退出期间不成长也不会死(与原版一致)
 - 偏好:同目录 `prefs.json`(当前皮肤等本机设置,与项目默认值 `config.json` 分开)
 

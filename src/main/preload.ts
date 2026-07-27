@@ -15,6 +15,7 @@ contextBridge.exposeInMainWorld("qqpet", {
   dragStart: (offsetX: number, offsetY: number) =>
     ipcRenderer.send("drag-start", offsetX, offsetY),
   dragEnd: () => ipcRenderer.send("drag-end"),
+  setInteractive: (on: boolean) => ipcRenderer.send("set-interactive", on),
   action: (kind: string, id?: string, extra?: string) =>
     ipcRenderer.invoke("action", kind, id, extra),
   requestSnapshot: () => ipcRenderer.invoke("get-snapshot"),

@@ -201,16 +201,39 @@ function showBubble(text: string) {
  * 但事件是从子元素(canvas / svg / #pet)冒泡上来的,
  * e.offsetX/Y 会相对那个子元素而不是 stage,导致判定永远落空。
  */
-function inPet(e: MouseEvent): boolean {
+function hitAt(x: number, y: number): boolean {
   const cx = stage.clientWidth / 2;
-  return (
-    Math.abs(e.clientX - cx) <= petW / 2 + 6 &&
-    e.clientY >= stage.clientHeight - petH - 12
-  );
+  const dead = !!snap?.state?.dead;
+  // 死亡时可交互区域是墓碑(比宠物窄一些)
+  const w = dead ? 120 : petW + 12;
+  const h = dead ? 145 : petH + 12;
+  return Math.abs(x - cx) <= w / 2 && y >= stage.clientHeight - h;
+}
+function inPet(e: MouseEvent): boolean {
+  return hitAt(e.clientX, e.clientY);
 }
 
-let downPos = { x: 0, y: 0 };
+/**
+ * 鼠标穿透开关:窗口比宠物大得多,不做这一步透明区会挡住下面的应用。
+ * 主进程默认开启穿透(forward:true 仍会把 mousemove 转发进来),
+ * 光标压到宠物身上时通知主进程临时关掉穿透。
+ */
 let draggingNow = false;
+let interactive = false;
+function syncInteractive(on: boolean) {
+  if (on === interactive) return;
+  interactive = on;
+  window.qqpet.setInteractive(on);
+}
+window.addEventListener("mousemove", (e) => {
+  if (draggingNow) return; // 拖拽中不切换,否则窗口跟随有延迟会误判为离开
+  syncInteractive(hitAt(e.clientX, e.clientY));
+});
+window.addEventListener("mouseleave", () => {
+  if (!draggingNow) syncInteractive(false);
+});
+
+let downPos = { x: 0, y: 0 };
 let clickTimer: ReturnType<typeof setTimeout> | null = null;
 
 stage.addEventListener("mousedown", (e) => {

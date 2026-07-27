@@ -21,6 +21,7 @@ contextBridge.exposeInMainWorld("qqpet", {
   petClick() { calls.push("click"); }, petDoubleClick() { calls.push("dblclick"); },
   petMenu() { calls.push("menu"); },
   dragStart(x, y) { calls.push(`drag:${Math.round(x)},${Math.round(y)}`); }, dragEnd() {},
+  setInteractive(on) { calls.push(`interactive:${on}`); },
   async action() { return { ok: true, message: "" }; },
   async requestSnapshot() { return { state }; },
   async requestConfig() { return cfg; },

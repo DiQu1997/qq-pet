@@ -320,6 +320,10 @@ function createPetWindow(): void {
     visibleOnFullScreen: true,
     skipTransformProcessType: true,
   });
+  // 窗口(220×300)比宠物本身大得多,透明区域默认让鼠标穿透,
+  // 否则会挡住下面应用的点击。forward:true 让渲染层仍收得到 mousemove,
+  // 光标移到宠物身上时再由渲染层通知主进程临时恢复可交互。
+  petWin.setIgnoreMouseEvents(true, { forward: true });
   petWin.loadFile(join(__dirname, "index.html"));
   petWin.webContents.on("did-finish-load", () => {
     pushSnapshot();
@@ -699,6 +703,12 @@ function nagCheck(): void {
 }
 
 // ---------- IPC ----------
+/** 渲染层判断光标是否压在宠物身上,据此开关鼠标穿透 */
+ipcMain.on("set-interactive", (_e, on: boolean) => {
+  if (!alive(petWin) || dragging) return; // 拖拽中始终保持可交互
+  petWin.setIgnoreMouseEvents(!on, { forward: true });
+});
+
 ipcMain.on("pet-click", () => {
   if (hiddenAtEdge) return comeBack();
   if (engine.state.dead) return;

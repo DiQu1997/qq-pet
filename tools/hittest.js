@@ -36,10 +36,19 @@ app.whenReady().then(async () => {
     window.dispatchEvent(new MouseEvent("mousemove", { clientX: cx + 40, clientY: petCY - 40,
       screenX: 940, screenY: 340, bubbles: true }));
     window.dispatchEvent(new MouseEvent("mouseup", { bubbles: true })); await wait(200);
-    res["拖拽宠物→抓取偏移"] = __calls.get().join(",") || "(无反应)";
+    res["拖拽宠物→抓取偏移"] = __calls.get().filter(c => c.startsWith("drag:")).join(",") || "(无反应)";
 
     __calls.clear(); fire("click", cx, 30); await wait(300);
     res["点空白处→应无反应"] = __calls.get().join(",") || "(无反应)";
+
+    // 鼠标穿透:光标压在宠物上要恢复可交互,移开要放开穿透
+    const move = (x, y) => window.dispatchEvent(
+      new MouseEvent("mousemove", { clientX: x, clientY: y, bubbles: true }));
+    move(cx, 20); await wait(80); __calls.clear();      // 先移到空白处重置状态
+    move(cx, petCY); await wait(200);
+    res["移到宠物上→取消穿透"] = __calls.get().join(",") || "(无反应)";
+    __calls.clear(); move(cx, 20); await wait(200);
+    res["移开宠物→恢复穿透"] = __calls.get().join(",") || "(无反应)";
 
     return { petW: Math.round(petW), petH: Math.round(petH), res };
   })()`);
@@ -48,6 +57,8 @@ app.whenReady().then(async () => {
     "双击宠物→开社区": "dblclick",
     "右键宠物→菜单": "menu",
     "点空白处→应无反应": "(无反应)",
+    "移到宠物上→取消穿透": "interactive:true",
+    "移开宠物→恢复穿透": "interactive:false",
   };
   console.log(`\n### ${ID}  宠物尺寸 ${out.petW}x${out.petH}`);
   for (const [k, v] of Object.entries(out.res)) {
