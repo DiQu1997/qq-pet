@@ -23,6 +23,10 @@ contextBridge.exposeInMainWorld("qqpet", {
   requestSnapshot: () => ipcRenderer.invoke("get-snapshot"),
   requestConfig: () => ipcRenderer.invoke("get-config"),
   requestSkin: () => ipcRenderer.invoke("get-skin"),
+  requestPeers: () => ipcRenderer.invoke("get-peers"),
+  peerCard: (id: string) => ipcRenderer.invoke("peer-card", id),
+  onPeers: (cb: (peers: any[]) => void) =>
+    ipcRenderer.on("peers", (_e, peers) => cb(peers)),
   closeWindow: () => ipcRenderer.send("close-window"),
   openGame: (page: string) => ipcRenderer.send("open-game", page),
 });

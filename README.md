@@ -186,6 +186,30 @@ npm run build && open -n "$HOME/Library/Application Support/qq-pet-runtime/Elect
 
 平移/旋转/镜像是刚体变换,数学上零失真,可以放心用。
 
+## 局域网邻居(实验中)
+
+同一个 Wi-Fi 下的多台机器可以互相看到对方的宝贝。**默认关闭**,需要在
+**右键桌宠 →「局域网邻居」** 里主动开启,两台都开才能互相发现。
+开启后进社区窗口的 **📡 局域网邻居** 标签页查看。
+
+- **发现**:UDP 组播(`239.255.42.99:41999`),每 5 秒广播一次名片
+  (名字、等级、皮肤、HTTP 端口)。TTL=1,只在本网段,不出路由器
+- **通信**:每个实例监听一个系统分配的随机端口,提供 `GET /card`
+- **零新依赖**:只用 Node 内置的 `dgram` 与 `http`
+
+**已知限制**
+
+- 首次开启 macOS 会弹防火墙授权框,要选允许
+- 部分公司/校园网络会拦截 UDP 组播,那种环境发现不到邻居;手机热点、家用路由器一般没问题
+- 对方不在线时一律提示「对方不在家」,不做离线排队
+- 状态是客户端权威的,双方都能改自己的存档 —— 这是给朋友之间玩的,**不做反作弊,也不要开放给陌生人**
+
+**本机双开测试**:单实例锁是按 userData 路径判定的,换个目录就能开第二个实例:
+
+```bash
+QQPET_USER_DATA=/tmp/qqpet-B npm start
+```
+
 ## 架构
 
 - `config.json` — 全部游戏数值(衰减、成长表、等级表、商品、气泡台词)+ `skin` 选择,改数值不用碰代码
@@ -196,6 +220,7 @@ npm run build && open -n "$HOME/Library/Application Support/qq-pet-runtime/Elect
 - `src/renderer/rig.ts` — 骨骼动画引擎(父子层级 + 体积守恒),rig 类皮肤共用
 - 鼠标穿透:桌宠窗口(220×300)比宠物本身大,默认 `setIgnoreMouseEvents(true, {forward:true})`
   让透明区不挡下层应用;渲染层靠 mousemove 判断光标是否压在宠物上,再通知主进程临时恢复可交互
+- `src/main/lan.ts` — 局域网:UDP 组播发现 + HTTP 点对点(零新依赖)
 - 单实例:`app.requestSingleInstanceLock()`。重复 `npm start` 时第二个实例直接退出,
   否则两个实例会同时 tick 并每 15 秒抢写同一个 `save.json`,后写的覆盖先写的 → 进度丢失
 - 存档:`~/Library/Application Support/qq-pet/save.json`;退出期间不成长也不会死(与原版一致)

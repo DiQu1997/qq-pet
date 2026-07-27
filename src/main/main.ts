@@ -10,6 +10,7 @@ import {
 } from "electron";
 import { appendFileSync, readdirSync, readFileSync, writeFileSync, existsSync, mkdirSync } from "node:fs";
 import { join } from "node:path";
+import { LanNode, type Peer } from "./lan";
 import { PetEngine } from "../core/engine";
 import type { GameConfig, PetState } from "../core/types";
 
@@ -22,6 +23,12 @@ let communityWin: BrowserWindow | null = null;
 let gameWin: BrowserWindow | null = null;
 let tray: Tray | null = null;
 let engine: PetEngine;
+
+// 开发用:设了这个环境变量就换一份存档目录,方便在同一台机器上开第二个实例
+//(单实例锁按 userData 路径判定)。例:QQPET_USER_DATA=/tmp/pet2
+if (process.env.QQPET_USER_DATA) {
+  app.setPath("userData", process.env.QQPET_USER_DATA);
+}
 
 const savePath = () => join(app.getPath("userData"), "save.json");
 const logPath = () => join(app.getPath("userData"), "main.log");
@@ -122,6 +129,58 @@ function applySkin(id: string): void {
   // 重载窗口,渲染层会重新 requestSkin 拉到新素材
   if (alive(petWin)) petWin.reload();
   if (alive(communityWin)) communityWin.reload();
+}
+
+// ---------- 局域网 ----------
+let lan: LanNode | null = null;
+let peers: Peer[] = [];
+
+/** 本机稳定标识:换名字、换皮肤都不变,用来认人 */
+function selfId(): string {
+  const p = loadPrefs();
+  if (p.peerId) return p.peerId;
+  const id = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+  savePrefs({ peerId: id });
+  return id;
+}
+
+function lanEnabled(): boolean {
+  return loadPrefs().lan === true; // 默认关闭,由用户在菜单里主动开启
+}
+
+function pushPeers(): void {
+  if (alive(communityWin)) communityWin.webContents.send("peers", peers);
+}
+
+async function startLan(): Promise<void> {
+  if (lan?.isRunning) return;
+  lan = new LanNode({
+    selfId: selfId(),
+    getCard: () => ({
+      name: engine.state.name,
+      level: engine.level,
+      skinId: skin.id,
+      gender: engine.state.gender,
+    }),
+    onPeersChanged: (list) => {
+      peers = list;
+      pushPeers();
+    },
+    log: logLine,
+  });
+  try {
+    await lan.start();
+  } catch {
+    lan = null;
+    bubble("局域网启动失败,看看 main.log");
+  }
+}
+
+async function stopLan(): Promise<void> {
+  await lan?.stop();
+  lan = null;
+  peers = [];
+  pushPeers();
 }
 
 /** 老存档升级:用 newPet 的默认值兜底新字段 */
@@ -460,6 +519,23 @@ function buildMenu(): Menu {
     { type: "separator" },
     { label: "免打扰模式", type: "checkbox", checked: s.dnd, enabled: !busy, click: () => doAction("dnd") },
     {
+      label: `局域网邻居${lan?.isRunning ? `(已开启,${peers.length} 位在线)` : ""}`,
+      type: "checkbox",
+      checked: lanEnabled(),
+      click: async () => {
+        const on = !lanEnabled();
+        savePrefs({ lan: on });
+        if (on) {
+          await startLan();
+          bubble("局域网已开启,正在找邻居……");
+        } else {
+          await stopLan();
+          bubble("已关闭局域网");
+        }
+        pushSnapshot();
+      },
+    },
+    {
       label: "显示头顶名字",
       type: "checkbox",
       checked: loadPrefs().showName !== false,
@@ -783,6 +859,17 @@ ipcMain.handle("action", (_e, kind: string, id?: string, extra?: string) => {
 ipcMain.handle("get-snapshot", () => engine.snapshot(Date.now()));
 ipcMain.handle("get-config", () => engine.config);
 ipcMain.handle("get-skin", () => skin);
+ipcMain.handle("get-peers", () => ({ enabled: lanEnabled(), running: !!lan?.isRunning, peers }));
+ipcMain.handle("peer-card", async (_e, id: string) => {
+  const p = lan?.find(id);
+  if (!lan || !p) return { ok: false, message: "对方不在家" };
+  try {
+    const r = await lan.fetchCard(p);
+    return { ok: true, card: r.body };
+  } catch {
+    return { ok: false, message: "对方不在家" };
+  }
+});
 ipcMain.on("close-window", (e) => BrowserWindow.fromWebContents(e.sender)?.close());
 ipcMain.on("open-game", (_e, page: "battle" | "maze") => openGame(page));
 
@@ -812,6 +899,7 @@ function main(): void {
     createPetWindow();
     createTray();
     scheduleBehavior();
+    if (lanEnabled()) startLan();
 
     const TICK_SEC = 15;
     setInterval(() => {
@@ -828,6 +916,7 @@ function main(): void {
 }
 
 app.on("before-quit", () => {
+  lan?.stop();
   if (engine?.state.activity.type === "work") engine.settleWork("退出前自动结算:");
   save();
 });

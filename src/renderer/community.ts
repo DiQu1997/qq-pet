@@ -3,6 +3,9 @@ const $c = (id: string) => document.getElementById(id)!;
 let cfg: any = null;
 let snap: any = null;
 let skin: any = null;
+let lanInfo: { enabled: boolean; running: boolean; peers: any[] } = {
+  enabled: false, running: false, peers: [],
+};
 const T = (k: string, fb = "") => skin?.terms?.[k] ?? fb;
 let activeTab = "status";
 
@@ -18,6 +21,7 @@ const TABS = [
   { id: "games", icon: "🎮", name: "游乐场" },
   { id: "outfit", icon: "👒", name: "名品城" },
   { id: "pink", icon: "💎", name: "粉钻贵族" },
+  { id: "lan", icon: "📡", name: "局域网邻居" },
 ];
 
 const BANNERS: Record<string, { icon: string; title: string; sub: string }> = {
@@ -32,6 +36,7 @@ const BANNERS: Record<string, { icon: string; title: string; sub: string }> = {
   games: { icon: "🎮", title: "游乐场", sub: "玩游戏赚元宝,还能顺便涨心情" },
   outfit: { icon: "👒", title: "瓦里步行街 · 名品城", sub: "买下的装扮会真的穿在桌面上的宝贝身上" },
   pink: { icon: "💎", title: "粉钻贵族", sub: "做尊贵的宠物,养宠从此不费心" },
+  lan: { icon: "📡", title: "局域网邻居", sub: "同一个 Wi-Fi 下的宝贝会自动出现在这里" },
 };
 
 function esc(s: any): string {
@@ -763,11 +768,40 @@ function renderPink(): string {
   })}</div>`;
 }
 
+function renderLan(): string {
+  const skinName = (id: string) => (id === skin?.id ? skin.displayName : id);
+  if (!lanInfo.enabled) {
+    return `${banner("lan")}
+    ${notice("局域网功能默认关闭。<b>右键桌宠 →「局域网邻居」</b>打开后,同一个 Wi-Fi 下的其它宝贝会自动出现在这里。")}
+    ${notice("开启后本机会在局域网内广播宝贝的名字和等级(只在本网段,不出路由器)。首次开启 macOS 会弹防火墙授权框,选允许。", true)}`;
+  }
+  if (!lanInfo.running) {
+    return `${banner("lan")}${notice("局域网正在启动……如果一直是这个状态,看看 main.log 里的报错。", true)}`;
+  }
+  const cards = lanInfo.peers
+    .map((p: any) =>
+      card({
+        icon: "🐾",
+        title: p.name,
+        tags: [greyTag(`Lv.${p.level}`), greyTag(skinName(p.skinId)),
+               greyTag(p.gender === "QGG" ? T("maleLabel", "男孩") : T("femaleLabel", "女孩"))],
+        desc: `${p.host}:${p.port}`,
+        action: btn("看看它", `act2('peer.card','${p.id}')`, { sm: true }),
+      }),
+    )
+    .join("");
+  return `${banner("lan")}
+  ${lanInfo.peers.length
+      ? section("👋", `发现 ${lanInfo.peers.length} 位邻居`) + `<div class="grid">${cards}</div>`
+      : notice("还没发现邻居。确认另一台也<b>开启了局域网邻居</b>、连的是<b>同一个 Wi-Fi</b>,然后等几秒(每 5 秒广播一次)。")}
+  ${notice("找不到对方?部分公司/校园网络会拦截 UDP 组播,那种网络下发现不到邻居。手机热点、家用路由器一般没问题。")}`;
+}
+
 // ---------- 框架 ----------
 const RENDERERS: Record<string, () => string> = {
   status: renderStatus, shop: renderShop, hospital: renderHospital, school: renderSchool,
   work: renderWork, church: renderChurch, travel: renderTravel, welfare: renderWelfare,
-  games: renderGames, outfit: renderOutfit, pink: renderPink,
+  games: renderGames, outfit: renderOutfit, pink: renderPink, lan: renderLan,
 };
 
 function render() {
@@ -789,6 +823,13 @@ function render() {
 }
 
 (window as any).act = act;
+(window as any).act2 = async (kind: string, id: string) => {
+  if (kind !== "peer.card") return;
+  const r = await window.qqpet.peerCard(id);
+  if (!r.ok) return showMsg(r.message, false);
+  const c = r.card;
+  showMsg(`「${c.name}」Lv.${c.level} · ${c.skinId} —— 它正在自己家里待着`);
+};
 (window as any).doRename = () => {
   const input = document.getElementById("renameInput") as HTMLInputElement | null;
   if (input?.value.trim()) act("rename", input.value.trim());
@@ -804,6 +845,11 @@ document.addEventListener("keydown", (e) => {
 window.qqpet.onSnapshot((s) => {
   snap = s;
   render();
+});
+window.qqpet.onPeers((list) => {
+  lanInfo.peers = list;
+  lanInfo.running = true;
+  if (activeTab === "lan") render();
 });
 window.qqpet.onGotoTab((tab) => {
   // 支持 "status:rename" 这种带动作的形式,从右键菜单直达并聚焦
