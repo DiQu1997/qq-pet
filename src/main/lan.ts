@@ -13,6 +13,7 @@
 import dgram from "node:dgram";
 import http from "node:http";
 import { AddressInfo } from "node:net";
+import { networkInterfaces } from "node:os";
 
 const GROUP = "239.255.42.99";
 const DISCOVERY_PORT = 41999;
@@ -52,6 +53,29 @@ export interface LanOptions {
   log: (msg: string) => void;
 }
 
+/** 挑一块真正连着局域网的网卡。多网卡(VPN/utun/虚拟机)时不指定会走错口 → EHOSTUNREACH */
+function primaryIPv4(): string | null {
+  const ifs = networkInterfaces();
+  // 优先常见的物理网卡名,其次任意非内部 IPv4
+  const prefer = ["en0", "en1", "eth0", "wlan0"];
+  for (const name of [...prefer, ...Object.keys(ifs)]) {
+    for (const a of ifs[name] ?? []) {
+      if (a.family === "IPv4" && !a.internal) return a.address;
+    }
+  }
+  return null;
+}
+
+export interface LanDiag {
+  running: boolean;
+  selfId: string;
+  httpPort: number;
+  localIp: string | null;
+  beaconsSent: number;
+  lastBeaconError: string | null;
+  peerCount: number;
+}
+
 export class LanNode {
   private sock: dgram.Socket | null = null;
   private server: http.Server | null = null;
@@ -60,6 +84,9 @@ export class LanNode {
   private peers = new Map<string, Peer>();
   private httpPort = 0;
   private started = false;
+  private localIp: string | null = null;
+  private beaconsSent = 0;
+  private lastBeaconError: string | null = null;
 
   constructor(private opts: LanOptions) {}
 
@@ -77,6 +104,19 @@ export class LanNode {
   }
   find(id: string): Peer | undefined {
     return this.list().find((p) => p.id === id);
+  }
+
+  /** 诊断信息,给界面显示,方便自查"为什么看不到邻居" */
+  diag(): LanDiag {
+    return {
+      running: this.started,
+      selfId: this.opts.selfId,
+      httpPort: this.httpPort,
+      localIp: this.localIp,
+      beaconsSent: this.beaconsSent,
+      lastBeaconError: this.lastBeaconError,
+      peerCount: this.list().length,
+    };
   }
 
   async start(): Promise<void> {
@@ -210,9 +250,18 @@ export class LanNode {
 
     sock.bind(DISCOVERY_PORT, () => {
       try {
-        sock.addMembership(GROUP);
+        this.localIp = primaryIPv4();
+        if (this.localIp) {
+          // 显式指定出口网卡:装了 VPN/虚拟机的机器上,不指定会挑到 utun 之类
+          // 的口,发不出去(EHOSTUNREACH),表现为"对方看不到我"
+          sock.setMulticastInterface(this.localIp);
+          sock.addMembership(GROUP, this.localIp);
+        } else {
+          sock.addMembership(GROUP);
+        }
         sock.setMulticastTTL(1); // 只在本网段,不跨路由
         sock.setMulticastLoopback(true); // 同一台机器上的两个实例也能互相看见
+        this.opts.log(`组播出口网卡: ${this.localIp ?? "(系统默认)"}`);
       } catch (e) {
         this.opts.log(`加入组播组失败(网络可能禁用了组播): ${e}`);
       }
@@ -245,7 +294,19 @@ export class LanNode {
     };
     const buf = Buffer.from(JSON.stringify(card));
     this.sock.send(buf, 0, buf.length, DISCOVERY_PORT, GROUP, (err) => {
-      if (err) this.opts.log(`心跳发送失败: ${err.message}`);
+      if (err) {
+        // 只在错误变化时记日志,否则每 5 秒刷屏
+        if (this.lastBeaconError !== err.message) {
+          this.opts.log(`心跳发送失败: ${err.message}`);
+        }
+        this.lastBeaconError = err.message;
+      } else {
+        this.beaconsSent++;
+        if (this.lastBeaconError) {
+          this.opts.log("心跳恢复正常");
+          this.lastBeaconError = null;
+        }
+      }
     });
   }
 

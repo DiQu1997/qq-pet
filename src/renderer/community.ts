@@ -3,7 +3,7 @@ const $c = (id: string) => document.getElementById(id)!;
 let cfg: any = null;
 let snap: any = null;
 let skin: any = null;
-let lanInfo: { enabled: boolean; running: boolean; peers: any[] } = {
+let lanInfo: { enabled: boolean; running: boolean; peers: any[]; diag?: any } = {
   enabled: false, running: false, peers: [],
 };
 const T = (k: string, fb = "") => skin?.terms?.[k] ?? fb;
@@ -791,12 +791,31 @@ function renderLan(): string {
       }),
     )
     .join("");
+
+  const d = lanInfo.diag;
+  const diagBox = d
+    ? `${section("🔧", "本机状态(排查用)")}
+      <div class="statgrid">
+        <div class="stat"><div class="k">本机 IP</div><div class="v" style="font-size:13px">${esc(d.localIp ?? "未知")}</div></div>
+        <div class="stat"><div class="k">监听端口</div><div class="v" style="font-size:13px">${d.httpPort}</div></div>
+        <div class="stat"><div class="k">已发心跳</div><div class="v" style="font-size:13px">${d.beaconsSent}</div></div>
+        <div class="stat"><div class="k">发现邻居</div><div class="v" style="font-size:13px">${d.peerCount}</div></div>
+      </div>
+      ${d.lastBeaconError
+        ? notice(`⚠️ 心跳发不出去:<b>${esc(d.lastBeaconError)}</b> —— 对方将看不到你。常见于装了 VPN / 虚拟机导致组播走错网卡。`, true)
+        : d.beaconsSent === 0
+          ? notice("还没成功发出心跳,稍等几秒。", true)
+          : ""}`
+    : "";
+
   return `${banner("lan")}
   ${lanInfo.peers.length
       ? section("👋", `发现 ${lanInfo.peers.length} 位邻居`) + `<div class="grid">${cards}</div>`
-      : notice("还没发现邻居。确认另一台也<b>开启了局域网邻居</b>、连的是<b>同一个 Wi-Fi</b>,然后等几秒(每 5 秒广播一次)。")}
+      : notice("还没发现邻居。确认另一台也<b>开启了局域网邻居</b>、连的是<b>同一个 Wi-Fi</b>,然后等十几秒(每 5 秒广播一次,16 秒没心跳判定下线)。")}
+  ${diagBox}
   ${notice("找不到对方?部分公司/校园网络会拦截 UDP 组播,那种网络下发现不到邻居。手机热点、家用路由器一般没问题。")}`;
 }
+
 
 // ---------- 框架 ----------
 const RENDERERS: Record<string, () => string> = {
@@ -854,6 +873,7 @@ window.qqpet.onSnapshot((s) => {
 window.qqpet.onPeers((list) => {
   lanInfo.peers = list;
   lanInfo.running = true;
+  lanInfo.enabled = true;
   if (activeTab === "lan") render();
 });
 window.qqpet.onGotoTab((tab) => {
@@ -879,7 +899,20 @@ $c("close").onclick = () => window.qqpet.closeWindow();
   st.textContent = `#msg:empty::before{content:"${T("idleHint", "四处逛逛吧~")}"}`;
   document.head.appendChild(st);
   snap = await window.qqpet.requestSnapshot();
+  lanInfo = await window.qqpet.requestPeers();
   render();
+
+  // 邻居状态靠轮询兜底:主进程只在"新发现/下线"时推送,
+  // 诊断数字(心跳计数等)不会推,而且窗口开启时机可能早于发现。
+  setInterval(async () => {
+    const next = await window.qqpet.requestPeers();
+    const changed =
+      next.peers.length !== lanInfo.peers.length ||
+      next.running !== lanInfo.running ||
+      next.enabled !== lanInfo.enabled;
+    lanInfo = next;
+    if (changed || activeTab === "lan") render();
+  }, 3000);
 })();
 
 export {};

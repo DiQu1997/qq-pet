@@ -1036,7 +1036,12 @@ ipcMain.handle("get-skin", (e) => {
   }
   return skin;
 });
-ipcMain.handle("get-peers", () => ({ enabled: lanEnabled(), running: !!lan?.isRunning, peers }));
+ipcMain.handle("get-peers", () => ({
+  enabled: lanEnabled(),
+  running: !!lan?.isRunning,
+  peers: lan?.list() ?? [],   // 直接问 LanNode,避免用可能过期的缓存
+  diag: lan?.diag() ?? null,
+}));
 ipcMain.handle("visit-start", async (_e, id: string, minutes: number) => {
   const p = lan?.find(id);
   if (!lan || !p) return { ok: false, message: "对方不在家" };

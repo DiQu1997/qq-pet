@@ -28,6 +28,19 @@ let snapCb = () => {};
 let bubbleCb = () => {};
 let gotoCb = () => {};
 let uiCb = () => {};
+let peersCb = () => {};
+
+/** 局域网假状态,测试里可用 __drive.lan() 替换 */
+let lanState = {
+  enabled: true,
+  running: true,
+  peers: [
+    { id: "peer-1", name: "卡比", level: 1, skinId: "snorlax", gender: "QGG",
+      host: "10.0.0.169", port: 50947, lastSeen: Date.now() },
+  ],
+  diag: { running: true, selfId: "self-test", httpPort: 54493,
+          localIp: "10.0.0.104", beaconsSent: 12, lastBeaconError: null, peerCount: 1 },
+};
 
 /** 完整快照:字段须与 StatusSnapshot 对齐,派生规则照抄引擎,避免与产品脱节 */
 function snapshot() {
@@ -78,6 +91,17 @@ contextBridge.exposeInMainWorld("qqpet", {
   async requestSnapshot() { return snapshot(); },
   async requestConfig() { return cfg; },
   async requestSkin() { return skin; },
+  // —— 局域网(测试用假数据)——
+  async requestPeers() { return lanState; },
+  async peerCard(id) {
+    const p = lanState.peers.find((x) => x.id === id);
+    return p ? { ok: true, card: p } : { ok: false, message: "对方不在家" };
+  },
+  async visitStart(id) {
+    calls.push(`visit:${id}`);
+    return { ok: true, message: "出发去串门啦" };
+  },
+  onPeers(cb) { peersCb = cb; },
   closeWindow() {},
   openGame() {},
 });
@@ -94,4 +118,5 @@ contextBridge.exposeInMainWorld("__drive", {
   snap: (patch) => { Object.assign(state, patch); snapCb(snapshot()); },
   bubble: (t) => bubbleCb(t),
   ui: (p) => uiCb(p),
+  lan: (patch) => { lanState = { ...lanState, ...patch }; peersCb(lanState.peers); },
 });
