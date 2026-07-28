@@ -181,7 +181,8 @@ export class PetEngine {
     let moodDelta = -c.decay.moodPerMin;
     if (this.hungerLow || this.cleanLow) moodDelta -= c.decay.moodPenaltyPerMin;
     if (s.sickness) moodDelta -= c.decay.moodSickPerMin;
-    if (s.activity.type === "travel") moodDelta += c.moodGain.travelPerMin + c.decay.moodPerMin;
+    if (s.activity.type === "travel" || s.activity.type === "visiting")
+      moodDelta += c.moodGain.travelPerMin + c.decay.moodPerMin;
     s.mood = Math.max(0, Math.min(this.moodCap, s.mood + moodDelta * minutes));
 
     // --- 成长 ---
@@ -230,6 +231,10 @@ export class PetEngine {
     } else if (act.type === "travel") {
       if (act.minutes >= act.plannedMinutes) {
         events.push(...this.finishTravel(now));
+      }
+    } else if (act.type === "visiting") {
+      if (act.minutes >= act.plannedMinutes) {
+        events.push(this.finishVisit());
       }
     }
     return events;
@@ -549,6 +554,45 @@ export class PetEngine {
     return events;
   }
 
+  // ---------- 局域网串门 ----------
+  /** 出门去邻居家。时长由调用方给,到点自动回来 */
+  startVisit(peerId: string, peerName: string, minutes: number): ActionResult {
+    const dead = this.guardAlive();
+    if (dead) return dead;
+    if (this.state.sickness) return { ok: false, message: "宝贝生着病,不方便去串门" };
+    if (this.state.activity.type !== "none") return { ok: false, message: "宝贝正忙着呢" };
+    this.state.activity = {
+      type: "visiting",
+      refId: peerId,
+      refName: peerName,
+      minutes: 0,
+      plannedMinutes: minutes,
+      unpaidMinutes: 0,
+    };
+    return { ok: true, message: `出发去「${peerName}」家串门啦,${minutes} 分钟后回来` };
+  }
+
+  /** 到点(或被提前叫回)结束串门 */
+  finishVisit(): string {
+    const act = this.state.activity;
+    const who = act.refName || "邻居";
+    this.state.activity = emptyActivity();
+    this.addMood(this.config.moodGain.game);
+    const souvenir = 20 + Math.floor(this.rng() * 40);
+    this.state.yuanbao += souvenir;
+    return `从「${who}」家回来啦!玩得很开心,还带回 ${souvenir} 元宝的伴手礼`;
+  }
+
+  isVisiting(): boolean {
+    return this.state.activity.type === "visiting";
+  }
+
+  /** 家里来客人了:主人家的宝贝也开心 */
+  receiveGuest(guestName: string): string {
+    this.addMood(this.config.moodGain.toy);
+    return `「${guestName}」来家里串门啦!两个小家伙玩得很开心(心情 +${this.config.moodGain.toy})`;
+  }
+
   // ---------- 福利 ----------
   signin(): ActionResult {
     const dead = this.guardAlive();
@@ -817,6 +861,8 @@ export class PetEngine {
       activityLabel = `上学中:${info?.stage.name}${info?.subject.name}(${Math.round(done)}/${(info?.stage.hours ?? 0) * 60} 分钟)`;
     } else if (act.type === "travel") {
       activityLabel = `旅游中(${Math.round(act.plannedMinutes - act.minutes)} 分钟后回来)`;
+    } else if (act.type === "visiting") {
+      activityLabel = `在「${act.refName || "邻居"}」家串门(${Math.round(act.plannedMinutes - act.minutes)} 分钟后回来)`;
     }
     return {
       state: JSON.parse(JSON.stringify(this.state)),

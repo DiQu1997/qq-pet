@@ -17,6 +17,7 @@ interface QQPetBridge {
   requestSkin(): Promise<any>;
   requestPeers(): Promise<{ enabled: boolean; running: boolean; peers: any[] }>;
   peerCard(id: string): Promise<any>;
+  visitStart(id: string, minutes: number): Promise<{ ok: boolean; message: string }>;
   onPeers(cb: (peers: any[]) => void): void;
   closeWindow(): void;
   openGame(page: string): void;

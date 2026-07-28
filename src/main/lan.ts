@@ -47,6 +47,8 @@ export interface LanOptions {
   onPeersChanged: (peers: Peer[]) => void;
   /** 收到串门请求;返回是否接受与说明 */
   onVisitRequest?: (from: Peer, payload: any) => { ok: boolean; message: string };
+  /** 客人提前告辞 */
+  onVisitEnd?: (peerId: string) => void;
   log: (msg: string) => void;
 }
 
@@ -160,6 +162,25 @@ export class LanNode {
       return;
     }
 
+    if (req.method === "POST" && url === "/visit/end") {
+      let raw = "";
+      req.on("data", (c) => {
+        raw += c;
+        if (raw.length > 8 * 1024) req.destroy();
+      });
+      req.on("end", () => {
+        let payload: any = {};
+        try {
+          payload = JSON.parse(raw || "{}");
+        } catch {
+          return send(400, { ok: false, message: "请求格式不对" });
+        }
+        this.opts.onVisitEnd?.(payload?.id);
+        send(200, { ok: true, message: "收到" });
+      });
+      return;
+    }
+
     send(404, { ok: false, message: "没有这个接口" });
   }
 
@@ -236,6 +257,15 @@ export class LanNode {
 
   requestVisit(peer: Peer, payload: unknown, timeoutMs = 4000): Promise<any> {
     return this.request(peer, "POST", "/visit", payload, timeoutMs);
+  }
+
+  /** 告诉主人家「我回去了」,让对方及时收起客人窗口(尽力而为,失败也不影响自己) */
+  requestVisitEnd(peer: Peer, payload: unknown, timeoutMs = 2000): Promise<any> {
+    return this.request(peer, "POST", "/visit/end", payload, timeoutMs);
+  }
+
+  endVisit(peer: Peer, selfId: string): Promise<any> {
+    return this.request(peer, "POST", "/visit/end", { id: selfId }, 2000);
   }
 
   private request(

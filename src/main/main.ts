@@ -166,6 +166,23 @@ async function startLan(): Promise<void> {
       peers = list;
       pushPeers();
     },
+    onVisitRequest: (from, payload) => {
+      const m = Math.max(1, Math.min(60, Number(payload?.minutes) || 10));
+      return acceptGuest(
+        {
+          id: from.id,
+          name: String(payload?.from?.name ?? from.name).slice(0, 8),
+          level: Number(payload?.from?.level) || 1,
+          skinId: String(payload?.from?.skinId ?? "penguin"),
+          gender: payload?.from?.gender === "QMM" ? "QMM" : "QGG",
+          outfit: payload?.from?.outfit ?? { hat: null, scene: null },
+        },
+        m,
+      );
+    },
+    onVisitEnd: (peerId) => {
+      if (guest && guest.id === peerId) endGuestVisit("提前回家了");
+    },
     log: logLine,
   });
   try {
@@ -181,6 +198,114 @@ async function stopLan(): Promise<void> {
   lan = null;
   peers = [];
   pushPeers();
+}
+
+// ---------- 客人(别人家的宝贝来我家) ----------
+interface Guest {
+  id: string;
+  name: string;
+  level: number;
+  skinId: string;
+  gender: "QGG" | "QMM";
+  outfit: { hat: string | null; scene: string | null };
+  until: number;
+}
+let guest: Guest | null = null;
+let guestWin: BrowserWindow | null = null;
+let guestTimer: NodeJS.Timeout | null = null;
+/** 自家宝贝正在谁家做客 */
+let visitingPeerId: string | null = null;
+
+/** 客人窗口用的假快照:字段与 StatusSnapshot 对齐,但不参与本机 tick */
+function guestSnapshot() {
+  if (!guest) return null;
+  return {
+    state: {
+      name: guest.name,
+      gender: guest.gender,
+      generation: 1,
+      parents: null,
+      hunger: 3000, clean: 3000, mood: 900, health: 5,
+      growth: 0, yuanbao: 0, dnd: false, lastClickGainAt: 0, onlineMinutes: 0,
+      sickness: null, dead: false, inventory: {},
+      activity: { type: "none", refId: "", minutes: 0, plannedMinutes: 0, unpaidMinutes: 0 },
+      completedCourses: [], currentCourse: null,
+      stats: { wu: 0, zhi: 0, mei: 0 }, marriage: null, freeRingClaimed: false,
+      daily: {}, dreamRewardCount: 0,
+      outfit: guest.outfit ?? { hat: null, scene: null },
+      ownedOutfits: [], pinkUntil: 0,
+    },
+    level: guest.level,
+    hungerMax: 6000, cleanMax: 6000,
+    hungerLabel: "", cleanLabel: "", moodLabel: "", moodColor: "green",
+    growthPerHour: 0, levelBase: 0, nextLevelGrowth: null,
+    sicknessInfo: null, isPink: false, activityLabel: "",
+  };
+}
+
+function openGuestWindow(): void {
+  if (!guest) return;
+  closeGuestWindow();
+  const wa = workArea();
+  // 放在自己宠物的另一侧,别叠在一起
+  const selfX = alive(petWin) ? petWin.getBounds().x : wa.x + wa.width - WIN_W - 80;
+  const gx = selfX > wa.x + wa.width / 2 ? wa.x + 60 : wa.x + wa.width - WIN_W - 60;
+  guestWin = new BrowserWindow({
+    width: WIN_W, height: WIN_H, x: gx, y: floorY(),
+    transparent: true, frame: false, resizable: false, alwaysOnTop: true,
+    skipTaskbar: true, hasShadow: false,
+    webPreferences: { preload: join(__dirname, "preload.js") },
+  });
+  guestWin.setAlwaysOnTop(true, "screen-saver");
+  guestWin.setVisibleOnAllWorkspaces(true, {
+    visibleOnFullScreen: true, skipTransformProcessType: true,
+  });
+  guestWin.setIgnoreMouseEvents(true, { forward: true });
+  guestWin.loadFile(join(__dirname, "index.html"));
+  guestWin.webContents.on("did-finish-load", () => {
+    if (!alive(guestWin)) return;
+    guestWin.webContents.send("ui-prefs", { showName: true }); // 客人一定要显示名字
+    guestWin.webContents.send("snapshot", guestSnapshot());
+    guestWin.webContents.send("anim", "sing");
+    guestWin.webContents.send("bubble", `我是「${guest!.name}」,来串门啦!`);
+    setTimeout(() => {
+      if (alive(guestWin)) guestWin.webContents.send("anim", "idle");
+    }, 2500);
+  });
+  guestWin.on("closed", () => (guestWin = null));
+}
+
+function closeGuestWindow(): void {
+  if (alive(guestWin)) guestWin.close();
+  guestWin = null;
+}
+
+function endGuestVisit(reason: string): void {
+  if (!guest) return;
+  const name = guest.name;
+  guest = null;
+  if (guestTimer) clearTimeout(guestTimer), (guestTimer = null);
+  closeGuestWindow();
+  logLine(`客人离开:${name}(${reason})`);
+  bubble(`「${name}」${reason}`);
+  pushSnapshot();
+  save();
+}
+
+/** 接受一位客人 */
+function acceptGuest(g: Omit<Guest, "until">, minutes: number): { ok: boolean; message: string } {
+  if (engine.state.dead) return { ok: false, message: "对方家里出了点事,改天再来吧" };
+  if (guest) return { ok: false, message: `家里已经有客人「${guest.name}」了` };
+  guest = { ...g, until: Date.now() + minutes * 60_000 };
+  openGuestWindow();
+  const msg = engine.receiveGuest(g.name);
+  bubble(msg);
+  handleEvents([]);
+  pushSnapshot();
+  save();
+  guestTimer = setTimeout(() => endGuestVisit("回自己家了,下次再来玩~"), minutes * 60_000);
+  logLine(`客人到访:${g.name}(${minutes} 分钟)`);
+  return { ok: true, message: `${engine.state.name} 很欢迎你来玩!` };
 }
 
 /** 老存档升级:用 newPet 的默认值兜底新字段 */
@@ -227,6 +352,10 @@ function floorY(): number {
 
 function alive(win: BrowserWindow | null): win is BrowserWindow {
   return !!win && !win.isDestroyed();
+}
+
+function isGuestSender(e: { sender: Electron.WebContents }): boolean {
+  return alive(guestWin) && e.sender.id === guestWin.webContents.id;
 }
 
 function pushSnapshot(): void {
@@ -768,9 +897,15 @@ function handleEvents(events: string[]): void {
       bubble("宝贝……永远地闭上了眼睛(右键选择复活或埋葬)");
       continue;
     }
-    if (ev.includes("旅游回来")) {
+    if (ev.includes("旅游回来") || ev.includes("家回来啦")) {
       petWin?.show();
       startFall();
+      // best-effort 告诉主人我走了,免得对方干等计时器
+      if (visitingPeerId && lan) {
+        const p = lan.find(visitingPeerId);
+        if (p) lan.endVisit(p, selfId()).catch(() => {});
+        visitingPeerId = null;
+      }
     }
     setTimeout(() => bubble(ev), delay);
     delay += 4200;
@@ -800,12 +935,24 @@ function nagCheck(): void {
 
 // ---------- IPC ----------
 /** 渲染层判断光标是否压在宠物身上,据此开关鼠标穿透 */
-ipcMain.on("set-interactive", (_e, on: boolean) => {
+ipcMain.on("set-interactive", (e, on: boolean) => {
+  if (isGuestSender(e)) {
+    if (alive(guestWin)) guestWin.setIgnoreMouseEvents(!on, { forward: true });
+    return;
+  }
   if (!alive(petWin) || dragging) return; // 拖拽中始终保持可交互
   petWin.setIgnoreMouseEvents(!on, { forward: true });
 });
 
-ipcMain.on("pet-click", () => {
+ipcMain.on("pet-click", (e) => {
+  if (isGuestSender(e)) {
+    if (alive(guestWin) && guest) {
+      guestWin.webContents.send("anim", "dance");
+      guestWin.webContents.send("bubble", "嘿嘿,别挠我痒痒~");
+      setTimeout(() => alive(guestWin) && guestWin.webContents.send("anim", "idle"), 1500);
+    }
+    return;
+  }
   if (hiddenAtEdge) return comeBack();
   if (engine.state.dead) return;
   if (engine.petClick(Date.now())) {
@@ -814,11 +961,25 @@ ipcMain.on("pet-click", () => {
     pushSnapshot();
   }
 });
-ipcMain.on("pet-double-click", () => openCommunity());
-ipcMain.on("pet-menu", () => {
+ipcMain.on("pet-double-click", (e) => {
+  if (isGuestSender(e)) return;
+  openCommunity();
+});
+ipcMain.on("pet-menu", (e) => {
+  if (isGuestSender(e)) {
+    if (!alive(guestWin) || !guest) return;
+    Menu.buildFromTemplate([
+      { label: `客人:${guest.name}`, enabled: false },
+      { type: "separator" },
+      { label: "请它回去", click: () => endGuestVisit("被请回家了") },
+    ]).popup({ window: guestWin });
+    return;
+  }
   if (petWin) buildMenu().popup({ window: petWin });
 });
-ipcMain.on("drag-start", (_e, ox: number, oy: number) => {
+ipcMain.on("drag-start", (e, ox: number, oy: number) => {
+  if (isGuestSender(e)) return; // 客人不给拖
+
   if (engine.state.dead || engine.state.activity.type === "travel") return;
   dragging = true;
   hiddenAtEdge = false;
@@ -856,10 +1017,60 @@ ipcMain.handle("action", (_e, kind: string, id?: string, extra?: string) => {
   }
   return doAction(kind, id, extra);
 });
-ipcMain.handle("get-snapshot", () => engine.snapshot(Date.now()));
+ipcMain.handle("get-snapshot", (e) =>
+  isGuestSender(e) ? guestSnapshot() : engine.snapshot(Date.now()));
 ipcMain.handle("get-config", () => engine.config);
-ipcMain.handle("get-skin", () => skin);
+ipcMain.handle("get-skin", (e) => {
+  if (isGuestSender(e) && guest) {
+    logLine(`客人窗口渲染皮肤:${guest.skinId}(本机是 ${skin.id})`);
+    // 客人用它自己的皮肤渲染;本机没有那套素材就退回自己的
+    try {
+      return readSkin(guest.skinId);
+    } catch {
+      return skin;
+    }
+  }
+  return skin;
+});
 ipcMain.handle("get-peers", () => ({ enabled: lanEnabled(), running: !!lan?.isRunning, peers }));
+ipcMain.handle("visit-start", async (_e, id: string, minutes: number) => {
+  const p = lan?.find(id);
+  if (!lan || !p) return { ok: false, message: "对方不在家" };
+  if (engine.state.activity.type !== "none")
+    return { ok: false, message: "宝贝正忙着呢,先让它闲下来" };
+  const m = Math.max(1, Math.min(60, Math.round(minutes) || 10));
+  let res: any;
+  try {
+    res = await lan.requestVisit(p, {
+      from: {
+        id: selfId(),
+        name: engine.state.name,
+        level: engine.level,
+        skinId: skin.id,
+        gender: engine.state.gender,
+        outfit: engine.state.outfit,
+      },
+      minutes: m,
+    });
+  } catch {
+    return { ok: false, message: "对方不在家" };
+  }
+  if (!res.body?.ok) return { ok: false, message: res.body?.message ?? "对方拒绝了" };
+
+  const r = engine.startVisit(p.id, p.name, m);
+  if (!r.ok) return r;
+  visitingPeerId = p.id;
+  anim("walkRight");
+  bubble(r.message);
+  setTimeout(() => {
+    if (alive(petWin)) petWin.hide();
+  }, 2200);
+  pushSnapshot();
+  save();
+  return { ok: true, message: `${r.message}(对方说:${res.body.message})` };
+});
+
+
 ipcMain.handle("peer-card", async (_e, id: string) => {
   const p = lan?.find(id);
   if (!lan || !p) return { ok: false, message: "对方不在家" };

@@ -25,6 +25,7 @@ contextBridge.exposeInMainWorld("qqpet", {
   requestSkin: () => ipcRenderer.invoke("get-skin"),
   requestPeers: () => ipcRenderer.invoke("get-peers"),
   peerCard: (id: string) => ipcRenderer.invoke("peer-card", id),
+  visitStart: (id: string, minutes: number) => ipcRenderer.invoke("visit-start", id, minutes),
   onPeers: (cb: (peers: any[]) => void) =>
     ipcRenderer.on("peers", (_e, peers) => cb(peers)),
   closeWindow: () => ipcRenderer.send("close-window"),

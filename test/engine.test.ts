@@ -419,3 +419,47 @@ describe("M7 装扮与粉钻", () => {
     expect(paid.state.yuanbao).toBe(y0 - 100);
   });
 });
+
+describe("局域网串门", () => {
+  it("出门后进入 visiting,到点自动回来并带伴手礼", () => {
+    const e = fresh(() => 0.5);
+    const r = e.startVisit("peer1", "贝塔", 10);
+    expect(r.ok).toBe(true);
+    expect(e.isVisiting()).toBe(true);
+    const y0 = e.state.yuanbao;
+    const events = e.tick(10, NOW);
+    expect(e.state.activity.type).toBe("none");
+    expect(events.some((x) => x.includes("贝塔") && x.includes("回来"))).toBe(true);
+    expect(e.state.yuanbao).toBeGreaterThan(y0); // 伴手礼
+  });
+
+  it("串门期间心情上涨(与旅游同档)", () => {
+    const e = fresh();
+    e.state.mood = 500;
+    e.startVisit("peer1", "贝塔", 30);
+    e.tick(10, NOW);
+    expect(e.state.mood).toBeGreaterThan(500);
+  });
+
+  it("生病、忙碌、死亡时不能出门", () => {
+    const sick = fresh();
+    sick.state.sickness = { chain: "cold", stage: 1, minutes: 0, diagnosed: false };
+    expect(sick.startVisit("p", "贝塔", 10).ok).toBe(false);
+
+    const busy = fresh();
+    busy.startWork("banzhuan");
+    expect(busy.startVisit("p", "贝塔", 10).ok).toBe(false);
+
+    const dead = fresh();
+    dead.state.dead = true;
+    expect(dead.startVisit("p", "贝塔", 10).ok).toBe(false);
+  });
+
+  it("家里来客人,主人家宝贝心情上涨", () => {
+    const e = fresh();
+    e.state.mood = 500;
+    const msg = e.receiveGuest("阿尔法");
+    expect(msg).toContain("阿尔法");
+    expect(e.state.mood).toBe(600);
+  });
+});

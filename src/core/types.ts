@@ -206,12 +206,14 @@ export interface Sickness {
   diagnosed: boolean;
 }
 
-export type ActivityType = "none" | "work" | "school" | "travel";
+export type ActivityType = "none" | "work" | "school" | "travel" | "visiting";
 
 export interface Activity {
   type: ActivityType;
-  /** work: jobId / school: courseId / travel: modeId */
+  /** work: jobId / school: courseId / travel: modeId / visiting: peerId */
   refId: string;
+  /** visiting: 主人家宝贝的名字,用于回来时的汇报 */
+  refName?: string;
   minutes: number;
   /** travel 用:计划总分钟数 */
   plannedMinutes: number;

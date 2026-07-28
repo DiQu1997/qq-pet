@@ -786,7 +786,8 @@ function renderLan(): string {
         tags: [greyTag(`Lv.${p.level}`), greyTag(skinName(p.skinId)),
                greyTag(p.gender === "QGG" ? T("maleLabel", "男孩") : T("femaleLabel", "女孩"))],
         desc: `${p.host}:${p.port}`,
-        action: btn("看看它", `act2('peer.card','${p.id}')`, { sm: true }),
+        action: `<span class="inline">${btn("看看它", `act2('peer.card','${p.id}')`, { sm: true })}` +
+          `${btn("去串门", `act2('visit.start','${p.id}')`, { sm: true, gold: true })}</span>`,
       }),
     )
     .join("");
@@ -824,6 +825,10 @@ function render() {
 
 (window as any).act = act;
 (window as any).act2 = async (kind: string, id: string) => {
+  if (kind === "visit.start") {
+    const r = await window.qqpet.visitStart(id, 10);
+    return showMsg(r.message, r.ok);
+  }
   if (kind !== "peer.card") return;
   const r = await window.qqpet.peerCard(id);
   if (!r.ok) return showMsg(r.message, false);
