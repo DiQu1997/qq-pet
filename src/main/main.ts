@@ -8,7 +8,11 @@ import {
   screen,
   Tray,
 } from "electron";
-import { appendFileSync, readdirSync, readFileSync, writeFileSync, existsSync, mkdirSync } from "node:fs";
+import {
+  appendFileSync, readdirSync, readFileSync, readlinkSync, unlinkSync,
+  writeFileSync, existsSync, mkdirSync,
+} from "node:fs";
+import { hostname } from "node:os";
 import { join } from "node:path";
 import { LanNode, type Peer } from "./lan";
 import { PetEngine } from "../core/engine";
@@ -1087,7 +1091,61 @@ ipcMain.on("open-game", (_e, page: "battle" | "maze") => openGame(page));
 // ---------- 启动 ----------
 // 单实例锁:两个实例会同时 tick、同时写 save.json,后写的覆盖先写的 → 进度丢失。
 // 抢不到锁的那个直接退出,并让已在运行的实例把宠物叫出来。
-if (!app.requestSingleInstanceLock()) {
+/**
+ * 清理陈旧的单实例锁。
+ *
+ * Chromium 把锁写成 SingletonLock 符号链接,内容是 "主机名-PID"。
+ * 进程被 SIGKILL(崩溃、强杀、断电)时锁文件会残留,而 Chromium 未必能回收,
+ * 结果是应用**再也启动不了** —— 这比重复启动严重得多,必须自己兜底。
+ *
+ * 只在确认那个 PID 已经不存在时才删:
+ *   - 主机名对不上 → 不动(可能是共享目录)
+ *   - process.kill(pid, 0) 成功或报 EPERM → 进程还在,不动
+ *   - 报 ESRCH → 确实没了,清掉
+ */
+function clearStaleSingletonLock(): void {
+  if (process.platform === "win32") return;
+  const dir = app.getPath("userData");
+  let target: string;
+  try {
+    target = readlinkSync(join(dir, "SingletonLock"));
+  } catch {
+    return; // 没有锁文件,正常
+  }
+  const idx = target.lastIndexOf("-");
+  const host = target.slice(0, idx);
+  const pid = Number(target.slice(idx + 1));
+  if (!pid || host !== hostname()) return;
+
+  let pidAlive = true;
+  try {
+    process.kill(pid, 0);
+  } catch (e: any) {
+    if (e?.code === "ESRCH") pidAlive = false; // EPERM 等 = 进程存在但没权限,当作活着
+  }
+  // PID 可能被系统回收后分配给了别的程序,所以还要看 socket 在不在。
+  // socket 路径在临时目录里,重启/清理后会消失 —— 那时锁一定是陈旧的。
+  let socketAlive = false;
+  try {
+    socketAlive = existsSync(readlinkSync(join(dir, "SingletonSocket")));
+  } catch {
+    socketAlive = false;
+  }
+  if (pidAlive && socketAlive) return; // 两个都在 = 真有实例,别动
+  for (const f of ["SingletonLock", "SingletonCookie", "SingletonSocket"]) {
+    try {
+      unlinkSync(join(dir, f));
+    } catch {
+      /* 本来就没有 */
+    }
+  }
+  logLine(`清理了陈旧的单实例锁(PID ${pid} 已不存在)`);
+}
+
+clearStaleSingletonLock();
+const gotLock = app.requestSingleInstanceLock();
+if (!gotLock) {
+  logLine("已有实例在运行,本次启动退出");
   app.quit();
 } else {
   app.on("second-instance", () => {
