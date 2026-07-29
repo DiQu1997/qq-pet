@@ -8,14 +8,52 @@ import { PetSprite, type SpriteSkin } from "./pet-sprite";
 
 const $ = (id: string) => document.getElementById(id)!;
 
-/** 工位:器械名 + 该位置做什么动作。动作沿用皮肤已有的动画 */
-const STATIONS = [
-  { gear: "🏃 跑步机", anim: "walkRight" },
-  { gear: "🏋️ 举铁区", anim: "dance" },
-  { gear: "🧘 瑜伽垫", anim: "idle" },
-  { gear: "🚴 动感单车", anim: "walkLeft" },
-  { gear: "🤸 跳操区", anim: "dance" },
-  { gear: "🛋️ 休息区", anim: "sleep" },
+/**
+ * 工位定义。三层叠加才看得出"在运动":
+ *   anim   — 皮肤自带的精灵动画
+ *   motion — 叠在宠物身上的 CSS 节奏(起伏/深蹲/呼吸)
+ *   equip  — 器械本身的动画(履带滚动、杠铃起落、车轮转)
+ * 其中 equip 是主要信号:静态器械配原地走路,看起来只会像在发呆。
+ */
+interface Station {
+  gear: string;
+  anim: string;
+  motion: string;
+  /** 器械 DOM;fx 是汗滴之类的特效 */
+  equip: string;
+  fx?: string;
+}
+const STATIONS: Station[] = [
+  {
+    gear: "🏃 跑步机", anim: "walkRight", motion: "m-run",
+    equip: `<div class="equip treadmill"><div class="belt"></div><div class="base"></div>
+            <div class="console"><i></i></div></div>`,
+    fx: `<span class="fx sweat">💧</span><span class="fx sweat b">💧</span>`,
+  },
+  {
+    gear: "🏋️ 举铁区", anim: "dance", motion: "m-lift",
+    equip: `<div class="equip weights"><div class="plate"></div></div>`,
+    // 杠铃挂在 pet-wrap 里才能压在头顶,放器械层会从躯干穿过去
+    fx: `<div class="barbell"></div><span class="fx sweat">💧</span>`,
+  },
+  {
+    gear: "🧘 瑜伽垫", anim: "idle", motion: "m-breathe",
+    equip: `<div class="equip yoga"><div class="mat"><i></i></div></div>`,
+  },
+  {
+    gear: "🚴 动感单车", anim: "walkLeft", motion: "m-pedal",
+    equip: `<div class="equip bike"><div class="wheel"></div><div class="frame"></div></div>`,
+    fx: `<span class="fx sweat">💧</span>`,
+  },
+  {
+    gear: "🤸 跳操区", anim: "dance", motion: "m-jump",
+    equip: `<div class="equip aerobic"><div class="pad"></div></div>`,
+    fx: `<span class="fx puff">💨</span>`,
+  },
+  {
+    gear: "🛋️ 休息区", anim: "sleep", motion: "m-rest",
+    equip: `<div class="equip rest"><div class="sofa"></div></div>`,
+  },
 ];
 const MAX_SLOTS = STATIONS.length;
 
@@ -78,17 +116,21 @@ async function syncRoster(members: any[]): Promise<void> {
       el.className = "slot" + (m.id === selfId ? " me" : "");
       const sprite = new PetSprite(skin, {
         // 房间里统一缩小一点,保证多只能排得下
-        scale: (skin.scale ?? 1) * 0.72,
+        scale: (skin.scale ?? 1) * 0.85,
         outfits: cfg?.outfits ?? [],
       });
-      el.appendChild(sprite.el);
-      // 垫子与器械名跟宠物同属一个纵向流,天然对齐
-      const mat = document.createElement("div");
-      mat.className = "mat";
+      // 宠物外面套一层做运动节奏,不干扰精灵动画本身
+      const wrap = document.createElement("div");
+      wrap.className = `pet-wrap ${station.motion}`;
+      wrap.appendChild(sprite.el);
+      if (station.fx) wrap.insertAdjacentHTML("beforeend", station.fx);
+      el.appendChild(wrap);
+      // 器械与器械名跟宠物同属一个纵向流,天然对齐
+      el.insertAdjacentHTML("beforeend", station.equip);
       const label = document.createElement("div");
       label.className = "label";
       label.textContent = station.gear;
-      el.append(mat, label);
+      el.appendChild(label);
       slots.appendChild(el);
       await sprite.mount();
       item = { sprite, el };

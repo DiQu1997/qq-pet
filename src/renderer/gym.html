@@ -3,6 +3,12 @@
   <head>
     <meta charset="utf-8" />
     <style>
+      /* ============================================================
+         局域网健身房
+         让人看出"在运动"的关键不是宠物换动画,而是**器械在动**:
+         履带在滚、杠铃在起落、车轮在转 —— 静态器械配原地走路,
+         看起来只会像在发呆。宠物身上再叠一层节奏一致的起伏。
+         ============================================================ */
       * { box-sizing: border-box; }
       html, body {
         margin: 0; height: 100%; overflow: hidden;
@@ -12,82 +18,275 @@
       }
       .titlebar {
         -webkit-app-region: drag;
-        height: 44px;
+        height: 44px; flex-shrink: 0;
         display: flex; align-items: center; justify-content: space-between;
         padding: 0 12px 0 16px;
         color: #fff; font-size: 15px; font-weight: 700;
-        background: linear-gradient(180deg, #57c8e0 0%, #33a8c8 55%, #2189a8 100%);
-        border-bottom: 2px solid #1a7089;
-        text-shadow: 0 1px 2px rgba(0,0,0,0.25);
+        background: linear-gradient(180deg, #4a5a6b 0%, #38485a 55%, #2b3947 100%);
+        border-bottom: 2px solid #1e2935;
+        text-shadow: 0 1px 2px rgba(0,0,0,0.35);
       }
       .titlebar button {
         -webkit-app-region: no-drag;
         width: 26px; height: 26px;
-        border: 2px solid rgba(255,255,255,0.55);
+        border: 2px solid rgba(255,255,255,0.5);
         border-radius: 50%;
-        background: rgba(255,255,255,0.2);
+        background: rgba(255,255,255,0.15);
         color: #fff; font-size: 15px; line-height: 1; cursor: pointer;
       }
 
-      /* ---- 健身房场景 ---- */
+      /* ---------------- 房间:上墙下地 ---------------- */
       #room {
         position: relative;
         height: calc(100vh - 44px);
-        /* 墙面 + 地板 */
-        background:
-          linear-gradient(180deg, #dff1f7 0%, #cfe8f2 62%, #cfe8f2 62%, #b9d8e6 62.5%, #a8cadb 100%);
         overflow: hidden;
+        --floor: 56%;            /* 地平线位置 */
+        background:
+          /* 地板:深灰橡胶 */
+          linear-gradient(180deg, #6f7d8c 0%, #55636f 100%) 0 var(--floor) / 100% calc(100% - var(--floor)) no-repeat,
+          /* 墙面 */
+          linear-gradient(180deg, #dfe7ec 0%, #c6d3dc 100%);
       }
-      /* 墙上的窗户与挂钟 */
-      .decor { position: absolute; pointer-events: none; }
-      .window-pane {
-        top: 22px; width: 92px; height: 62px;
-        background: linear-gradient(160deg, #eaf7ff 0%, #bfe3f5 100%);
-        border: 4px solid #fff; border-radius: 6px;
-        box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+      /* 地板橡胶格纹 */
+      #room::after {
+        content: "";
+        position: absolute; left: 0; right: 0; bottom: 0;
+        height: calc(100% - var(--floor));
+        background-image:
+          repeating-linear-gradient(90deg, rgba(255,255,255,0.05) 0 1px, transparent 1px 46px),
+          repeating-linear-gradient(0deg, rgba(0,0,0,0.06) 0 1px, transparent 1px 26px);
+        pointer-events: none;
       }
-      .clock { top: 26px; left: 50%; transform: translateX(-50%); font-size: 30px; }
-      /* 地板横线,给一点纵深 */
-      .floor-line {
+      /* 踢脚线 */
+      .baseboard {
         position: absolute; left: 0; right: 0;
-        height: 2px; background: rgba(255,255,255,0.55);
+        top: calc(var(--floor) - 7px); height: 8px;
+        background: linear-gradient(180deg, #9aa8b4, #7d8b98);
+        box-shadow: 0 2px 4px rgba(0,0,0,0.18);
       }
-      /* 工位 = 名牌 + 宠物 + 垫子 + 器械名,整体一个纵向流。
-         之前宠物和器械分属两个绝对定位层,永远对不齐、还会被窗口底部截断 */
-      #slots { position: absolute; left: 0; right: 0; bottom: 26px; height: 1px; }
+
+      /* ---------------- 墙上装饰 ---------------- */
+      .mirror {
+        position: absolute; top: 26px; height: 116px;
+        background: linear-gradient(150deg, #f4fbff 0%, #dceaf3 42%, #eef7fc 43%, #cfe0eb 100%);
+        border: 5px solid #b7c6d1; border-radius: 4px;
+        box-shadow: inset 0 0 18px rgba(255,255,255,0.9), 0 3px 8px rgba(0,0,0,0.12);
+      }
+      .mirror::after {   /* 镜面反光斜条 */
+        content: ""; position: absolute; inset: 0;
+        background: linear-gradient(115deg, transparent 38%, rgba(255,255,255,0.75) 46%, transparent 54%);
+      }
+      /* 挂钟:画出来而不是用 emoji */
+      .wallclock {
+        position: absolute; top: 30px; left: 50%; transform: translateX(-50%);
+        width: 46px; height: 46px; border-radius: 50%;
+        background: #fdfefe; border: 4px solid #8c9aa6;
+        box-shadow: 0 3px 6px rgba(0,0,0,0.16);
+      }
+      .wallclock i {
+        position: absolute; left: 50%; bottom: 50%;
+        background: #3d4a56; transform-origin: 50% 100%; border-radius: 2px;
+      }
+      .wallclock .h { width: 3px; height: 11px; margin-left: -1.5px; transform: rotate(48deg); }
+      .wallclock .m { width: 2px; height: 15px; margin-left: -1px; animation: clockspin 24s linear infinite; }
+      @keyframes clockspin { to { transform: rotate(360deg); } }
+      /* 墙上哑铃架 */
+      .rack {
+        position: absolute; display: flex; flex-direction: column; gap: 9px;
+        padding: 8px 10px; border-radius: 6px;
+        background: rgba(120,136,150,0.28);
+        border: 2px solid rgba(90,105,118,0.4);
+      }
+      .rack b {
+        display: block; width: 54px; height: 8px; border-radius: 3px;
+        background: linear-gradient(180deg, #58656f, #3e4a54);
+        position: relative;
+      }
+      .rack b::before, .rack b::after {
+        content: ""; position: absolute; top: -4px; width: 9px; height: 16px;
+        border-radius: 3px; background: linear-gradient(180deg, #46525c, #2f3941);
+      }
+      .rack b::before { left: -4px; }
+      .rack b::after { right: -4px; }
+
+      /* 盆栽与饮水机 */
+      .prop { position: absolute; bottom: 12px; font-size: 40px; line-height: 1; filter: drop-shadow(0 3px 3px rgba(0,0,0,0.22)); }
+
+      /* ---------------- 工位 ---------------- */
+      #slots { position: absolute; left: 0; right: 0; bottom: 30px; height: 1px; }
       .slot {
         position: absolute; bottom: 0;
         display: flex; flex-direction: column; align-items: center;
         transform: translateX(-50%);
       }
-      .slot .mat {
-        width: 104px; height: 11px; border-radius: 6px; margin-top: 2px;
-        background: linear-gradient(180deg, #7fb8cc, #5d97ac);
-        box-shadow: 0 2px 0 rgba(0,0,0,0.12);
-      }
-      .slot .label {
-        margin-top: 4px; font-size: 11px; color: #4d6675;
-        letter-spacing: 0.5px; white-space: nowrap;
-      }
+      .pet-wrap { position: relative; }
       .pet-sprite .ps-name {
-        margin-bottom: 4px;
+        margin-bottom: 5px;
         padding: 2px 9px; border-radius: 11px;
-        background: rgba(40, 58, 68, 0.78);
+        background: rgba(28, 38, 46, 0.82);
         color: #fff; font-size: 11.5px; font-weight: 700;
         white-space: nowrap;
-        text-shadow: 0 1px 2px rgba(0,0,0,0.45);
+        text-shadow: 0 1px 2px rgba(0,0,0,0.5);
       }
       .slot.me .ps-name { background: #e8794a; }
       .slot.me .ps-name::after { content: " (我)"; opacity: 0.85; font-weight: 400; }
+      .slot .label {
+        margin-top: 5px; font-size: 11px; color: #e6eef4;
+        letter-spacing: 0.5px; white-space: nowrap;
+        text-shadow: 0 1px 2px rgba(0,0,0,0.45);
+      }
+
+      /* ===== 宠物身上的运动节奏(叠在精灵动画之上) ===== */
+      .m-run    { animation: mRun 0.42s ease-in-out infinite; }
+      .m-lift   { animation: mLift 1.5s ease-in-out infinite; }
+      .m-breathe{ animation: mBreathe 3.4s ease-in-out infinite; }
+      .m-pedal  { animation: mRun 0.55s ease-in-out infinite; }
+      .m-jump   { animation: mJump 0.72s cubic-bezier(.3,.7,.4,1) infinite; }
+      .m-rest   { animation: mBreathe 4.6s ease-in-out infinite; }
+      @keyframes mRun {
+        0%,100% { transform: translateY(0) rotate(-1deg); }
+        50%     { transform: translateY(-7px) rotate(1deg); }
+      }
+      @keyframes mLift {   /* 深蹲:下压再起身 */
+        0%,100% { transform: translateY(0) scaleY(1) scaleX(1); }
+        45%     { transform: translateY(6px) scaleY(0.9) scaleX(1.08); }
+        70%     { transform: translateY(-3px) scaleY(1.04) scaleX(0.97); }
+      }
+      @keyframes mBreathe {
+        0%,100% { transform: scaleY(1) scaleX(1); }
+        50%     { transform: scaleY(1.035) scaleX(0.966); }
+      }
+      @keyframes mJump {
+        0%,100% { transform: translateY(0) scaleY(1) scaleX(1); }
+        18%     { transform: translateY(2px) scaleY(0.88) scaleX(1.12); }
+        55%     { transform: translateY(-26px) scaleY(1.06) scaleX(0.95); }
+      }
+
+      /* ===== 汗滴 / 力量线:运动感的关键提示 ===== */
+      .fx { position: absolute; pointer-events: none; font-size: 13px; }
+      .sweat { top: 52%; right: -10px; animation: sweat 1.1s ease-in infinite; opacity: 0; }
+      .sweat.b { right: auto; left: -10px; animation-delay: 0.55s; }
+      @keyframes sweat {
+        0%   { opacity: 0; transform: translate(0, 0) scale(0.6); }
+        25%  { opacity: 1; }
+        100% { opacity: 0; transform: translate(10px, 26px) scale(1); }
+      }
+      .puff { bottom: 0; left: 50%; margin-left: -8px; font-size: 15px; animation: puff 0.72s ease-out infinite; }
+      @keyframes puff {
+        0%   { opacity: 0.5; transform: scale(0.5); }
+        60%  { opacity: 0; transform: scale(1.5) translateY(4px); }
+        100% { opacity: 0; }
+      }
+
+      /* ===== 器械 ===== */
+      /* align-items 必须是 stretch:column flex 里用 center 会让空 div 收缩到零宽,
+         履带/垫子/车架都会塌成一条线 */
+      .equip { position: relative; display: flex; flex-direction: column; align-items: stretch; }
+
+      /* 跑步机:履带纹在滚 —— 这才是"在跑"的主要视觉信号 */
+      .treadmill { width: 132px; }
+      .treadmill .belt {
+        height: 20px; border-radius: 4px;
+        /* 亮暗条纹要够对比,否则压在深灰地板上完全看不出在滚 */
+        background: repeating-linear-gradient(90deg, #c9d4dd 0 9px, #6d7b88 9px 18px);
+        background-size: 18px 100%;
+        animation: beltmove 0.3s linear infinite;
+        border: 2px solid #2f3841;
+        box-shadow: inset 0 2px 4px rgba(0,0,0,0.35);
+      }
+      @keyframes beltmove { to { background-position: -18px 0; } }
+      .treadmill .base {
+        height: 7px; border-radius: 0 0 5px 5px;
+        background: linear-gradient(180deg, #7b8794, #59646f);
+      }
+      .treadmill .console {
+        position: absolute; right: -16px; bottom: 16px;
+        width: 20px; height: 30px; border-radius: 3px;
+        background: linear-gradient(180deg, #8d99a5, #626d78);
+        border: 2px solid #4d5761;
+      }
+      .treadmill .console i {
+        position: absolute; left: 3px; top: 4px;
+        width: 10px; height: 6px; border-radius: 1px; background: #7fe3a0;
+        animation: blink 0.9s steps(2) infinite;
+      }
+      @keyframes blink { 50% { opacity: 0.35; } }
+
+      /* 举铁:杠铃随深蹲起落 */
+      .weights { width: 120px; }
+      /* 杠铃举过头顶(挂在 pet-wrap 里),别从躯干穿过去 */
+      /* 杠铃从身体后面穿过,两侧只露配重片 —— 正面看举铁就是这样,
+         压在头上会挡脸,画在身前会盖住肚子 */
+      .pet-wrap .pet-sprite { position: relative; z-index: 2; }
+      .barbell {
+        position: absolute; left: 50%; margin-left: -60px; top: 52%;
+        width: 120px; height: 9px; border-radius: 3px; z-index: 1;
+        background: linear-gradient(180deg, #cdd8e1, #8a97a3);
+        animation: barlift 1.5s ease-in-out infinite;
+        pointer-events: none;
+      }
+      .barbell::before, .barbell::after {
+        content: ""; position: absolute; top: -12px; width: 14px; height: 32px;
+        border-radius: 3px; background: linear-gradient(180deg, #47535d, #2a333b);
+      }
+      .barbell::before { left: -9px; }
+      .barbell::after { right: -9px; }
+      @keyframes barlift {
+        0%,100% { transform: translateY(0); }
+        45%     { transform: translateY(14px); }
+        70%     { transform: translateY(-4px); }
+      }
+      .weights .plate {
+        height: 9px; border-radius: 4px;
+        background: linear-gradient(180deg, #4a5760, #333d45);
+      }
+
+      /* 瑜伽垫 */
+      .yoga { width: 112px; }
+      .yoga .mat {
+        height: 11px; border-radius: 6px;
+        background: linear-gradient(180deg, #9b7ec9, #7b5fa8);
+        box-shadow: inset 0 -2px 0 rgba(0,0,0,0.15);
+      }
+      .yoga .mat i {
+        display: block; height: 100%;
+        background: repeating-linear-gradient(90deg, transparent 0 14px, rgba(255,255,255,0.25) 14px 15px);
+      }
+
+      /* 动感单车:轮子在转 */
+      .bike { width: 116px; }
+      .bike .frame {
+        height: 9px; border-radius: 4px;
+        background: linear-gradient(180deg, #6d7a86, #4c5761);
+      }
+      .bike .wheel {
+        position: absolute; bottom: 6px; right: 4px;
+        width: 30px; height: 30px; border-radius: 50%;
+        border: 3px solid #4c5761; border-top-color: #93a0ab;
+        animation: spin 0.5s linear infinite;
+      }
+      @keyframes spin { to { transform: rotate(360deg); } }
+
+      /* 跳操区 / 休息区 */
+      .aerobic { width: 108px; }
+      .aerobic .pad {
+        height: 10px; border-radius: 5px;
+        background: linear-gradient(180deg, #d98f5a, #b0703f);
+      }
+      .rest { width: 116px; }
+      .rest .sofa {
+        height: 18px; border-radius: 7px 7px 4px 4px;
+        background: linear-gradient(180deg, #7f6b8f, #5d4d6b);
+      }
 
       /* 空房间提示 */
       #empty {
-        position: absolute; left: 0; right: 0; top: 46%;
-        text-align: center; color: #6d8695; font-size: 13px; line-height: 1.9;
+        position: absolute; left: 0; right: 0; top: 22%;
+        text-align: center; color: #55636f; font-size: 13px; line-height: 1.9;
       }
       #status {
         position: absolute; left: 12px; bottom: 8px;
-        font-size: 11.5px; color: #5e7887;
+        font-size: 11.5px; color: #cfdae2; text-shadow: 0 1px 2px rgba(0,0,0,0.4);
       }
     </style>
   </head>
@@ -97,10 +296,12 @@
       <button id="close">×</button>
     </div>
     <div id="room">
-      <div class="decor window-pane" style="left: 40px"></div>
-      <div class="decor window-pane" style="right: 40px"></div>
-      <div class="decor clock">🕐</div>
-      <div class="floor-line" style="bottom: 22px"></div>
+      <div class="mirror" style="left: 26px; width: 168px"></div>
+      <div class="wallclock"><i class="h"></i><i class="m"></i></div>
+      <div class="rack" style="right: 34px; top: 40px"><b></b><b></b><b></b></div>
+      <div class="baseboard"></div>
+      <div class="prop" style="left: 16px">🪴</div>
+      <div class="prop" style="right: 18px">🚰</div>
       <div id="slots"></div>
       <div id="empty">
         健身房里还没有别人……<br />
