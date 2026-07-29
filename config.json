@@ -15,7 +15,9 @@
     "maxLevelForAttr": 30,
     "moodMax": 1000,
     "moodCapWork": 600,
-    "moodCapSchool": 900
+    "moodCapSchool": 900,
+    "feedCapPct": 0.6,
+    "washCapPct": 0.9
   },
   "hungerStates": [
     {

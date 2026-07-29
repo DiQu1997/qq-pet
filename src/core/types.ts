@@ -100,6 +100,9 @@ export interface GameConfig {
     moodMax: number;
     moodCapWork: number;
     moodCapSchool: number;
+    /** 到这个比例就拒绝喂食/洗澡 —— 也就是玩家实际能填到的上限 */
+    feedCapPct: number;
+    washCapPct: number;
   };
   hungerStates: StateBand[];
   cleanStates: StateBand[];
@@ -288,6 +291,13 @@ export interface StatusSnapshot {
   level: number;
   hungerMax: number;
   cleanMax: number;
+  /**
+   * 实际可达上限(喂食/洗澡被拒绝的那条线)。
+   * 界面必须按这个算百分比:hungerMax 是理论容量,但喂到 60% 就喂不进去了,
+   * 拿理论容量当分母会出现"42% 却显示吃得很饱"这种自相矛盾。
+   */
+  hungerFull: number;
+  cleanFull: number;
   hungerLabel: string;
   cleanLabel: string;
   moodLabel: string;

@@ -104,6 +104,14 @@ export class PetEngine {
     return baseMax + perLevelMax * Math.min(this.level, maxLevelForAttr);
   }
 
+  /** 实际可达上限:喂到这里就喂不进去了,界面按它算百分比 */
+  get hungerFull(): number {
+    return this.attrMax * (this.config.attr.feedCapPct ?? 0.6);
+  }
+  get cleanFull(): number {
+    return this.attrMax * (this.config.attr.washCapPct ?? 0.9);
+  }
+
   get hungerLow(): boolean {
     return this.state.hunger < this.attrMax * 0.24;
   }
@@ -300,7 +308,7 @@ export class PetEngine {
     if (dead) return dead;
     const item = this.config.foods.find((f) => f.id === itemId);
     if (!item) return { ok: false, message: "没有这种食物" };
-    if (this.state.hunger >= this.attrMax * 0.6)
+    if (this.state.hunger >= this.hungerFull)
       return { ok: false, message: "宝贝已经吃撑了,再喂就浪费啦" };
     let price = this.shopPrice(item.price, now);
     let free = false;
@@ -321,7 +329,7 @@ export class PetEngine {
     if (dead) return dead;
     const item = this.config.washes.find((w) => w.id === itemId);
     if (!item) return { ok: false, message: "没有这种清洁用品" };
-    if (this.state.clean >= this.attrMax * 0.9) return { ok: false, message: "宝贝已经很干净了" };
+    if (this.state.clean >= this.cleanFull) return { ok: false, message: "宝贝已经很干净了" };
     // 库存里的沐浴球等可以直接用
     let price = this.shopPrice(item.price, now);
     let free = false;
@@ -869,6 +877,8 @@ export class PetEngine {
       level: lv,
       hungerMax: this.attrMax,
       cleanMax: this.attrMax,
+      hungerFull: Math.round(this.hungerFull),
+      cleanFull: Math.round(this.cleanFull),
       hungerLabel: this.bandLabel(this.state.hunger, this.config.hungerStates),
       cleanLabel: this.bandLabel(this.state.clean, this.config.cleanStates),
       moodLabel: rate.label,

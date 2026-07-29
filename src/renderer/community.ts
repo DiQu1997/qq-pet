@@ -111,7 +111,11 @@ function renderHud(): string {
   const gPct = next ? ((s.growth - base) / (next - base)) * 100 : 100;
   const mini = (cls: string, label: string, val: number, max: number, tagText: string, tip = "") =>
     `<div class="minibar"${tip ? ` data-tip="${esc(tip)}"` : ""}>
-      <div class="lab"><span>${label} ${esc(tagText)}</span><span>${Math.round((val / max) * 100)}%</span></div>
+      <div class="lab"><span>${label} ${esc(tagText)}</span><span>${
+        // 夹在 100% —— 吃药会给饥饿 +300,可能顶过喂食上限,显示 108% 很怪;
+        // "吃撑了"这个标签已经表达了溢出
+        Math.min(100, Math.round((val / max) * 100))
+      }%</span></div>
       <div class="track"><i class="${cls}" style="width:${Math.max(0, Math.min(100, (val / max) * 100))}%"></i></div>
     </div>`;
 
@@ -140,14 +144,16 @@ function renderHud(): string {
         ${snap.activityLabel ? greyTag(snap.activityLabel) : ""}
       </div>
       <div class="minibars">
-        ${mini("f-hunger", "🍚", s.hunger, snap.hungerMax, snap.hungerLabel,
-          `饥饿 ${Math.round(s.hunger)} / ${snap.hungerMax}(${snap.hungerLabel})\n` +
+        ${mini("f-hunger", "🍚", s.hunger, snap.hungerFull, snap.hungerLabel,
+          `饥饿 ${Math.round(s.hunger)} / ${snap.hungerFull}(${snap.hungerLabel})\n` +
+          `喂到 ${snap.hungerFull} 就吃撑了,再喂会被拒绝\n` +
           `每分钟 -${hRate}${working ? "(打工中)" : ""}\n` +
           (s.hunger > hungerWarn
             ? `约 ${hoursTo(s.hunger, hungerWarn, hRate)} 小时后进入饥饿`
             : "⚠️ 已进入饥饿,会掉心情且容易生病"))}
-        ${mini("f-clean", "🛁", s.clean, snap.cleanMax, snap.cleanLabel,
-          `清洁 ${Math.round(s.clean)} / ${snap.cleanMax}(${snap.cleanLabel})\n` +
+        ${mini("f-clean", "🛁", s.clean, snap.cleanFull, snap.cleanLabel,
+          `清洁 ${Math.round(s.clean)} / ${snap.cleanFull}(${snap.cleanLabel})\n` +
+          `洗到 ${snap.cleanFull} 就够干净了,再洗会被拒绝\n` +
           `每分钟 -${cRate}${working ? "(打工中)" : ""}\n` +
           (s.clean > cleanWarn
             ? `约 ${hoursTo(s.clean, cleanWarn, cRate)} 小时后变脏`

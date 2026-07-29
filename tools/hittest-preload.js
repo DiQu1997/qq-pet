@@ -15,7 +15,7 @@ const cfg = JSON.parse(fs.readFileSync(`${DIST}/config.json`, "utf-8"));
 
 const state = {
   name: skin.terms.defaultName, gender: "QGG", generation: 1, parents: null,
-  hunger: 2600, clean: 1900, mood: 850, health: 5, growth: 120, yuanbao: 640,
+  hunger: 1700, clean: 2950, mood: 850, health: 5, growth: 120, yuanbao: 640,
   dnd: false, onlineMinutes: 512, sickness: null, dead: false,
   inventory: {}, activity: { type: "none", refId: "", minutes: 0, plannedMinutes: 0, unpaidMinutes: 0 },
   completedCourses: [], currentCourse: null, stats: { wu: 5, zhi: 5, mei: 5 },
@@ -87,6 +87,8 @@ function snapshot() {
     level,
     hungerMax: attrMax,
     cleanMax: attrMax,
+    hungerFull: Math.round(attrMax * (cfg.attr.feedCapPct ?? 0.6)),
+    cleanFull: Math.round(attrMax * (cfg.attr.washCapPct ?? 0.9)),
     hungerLabel: label(state.hunger, cfg.hungerStates),
     cleanLabel: label(state.clean, cfg.cleanStates),
     moodLabel: band.label,

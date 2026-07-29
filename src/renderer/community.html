@@ -170,10 +170,12 @@
       .minibars { display: flex; gap: 8px; }
       .minibar { flex: 1; position: relative; cursor: help; }
       /* 悬停显示精确数值:游戏里光看百分比不够,要知道还剩多少、还能撑多久 */
+      /* 提示放在条**下方**:HUD 贴着滚动区顶部,放上方会被窗口边裁掉
+         (曾经因此丢掉第一行数值,只剩后两行) */
       .minibar[data-tip]:hover::after {
         content: attr(data-tip);
         position: absolute;
-        left: 50%; bottom: calc(100% + 8px);
+        left: 50%; top: calc(100% + 8px);
         transform: translateX(-50%);
         z-index: 20;
         white-space: pre-line;
@@ -191,11 +193,11 @@
       .minibar[data-tip]:hover::before {
         content: "";
         position: absolute;
-        left: 50%; bottom: calc(100% + 2px);
+        left: 50%; top: calc(100% + 3px);
         margin-left: -5px;
         border: 5px solid transparent;
-        border-top-color: rgba(48, 32, 40, 0.95);
-        border-bottom: 0;
+        border-bottom-color: rgba(48, 32, 40, 0.95);
+        border-top: 0;
         z-index: 21;
         pointer-events: none;
       }

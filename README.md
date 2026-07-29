@@ -243,6 +243,10 @@ QQPET_USER_DATA=/tmp/qqpet-B QQPET_AUTO_GYM=1 npm start   # 启动后自动进�
 
 ## 架构
 
+- **属性条按「实际可达上限」算百分比**:`attrMax` 是理论容量,但喂到
+  `feedCapPct`(60%)就拒绝再喂、洗到 `washCapPct`(90%)就拒绝再洗。
+  拿理论容量当分母会出现「42% 却显示吃得很饱」这种自相矛盾 ——
+  快照里的 `hungerFull` / `cleanFull` 才是界面该用的分母。
 - `config.json` — 全部游戏数值(衰减、成长表、等级表、商品、气泡台词)+ `skin` 选择,改数值不用碰代码
 - `src/core/` — 纯逻辑引擎(不依赖 Electron,vitest 可测):属性衰减、心情→成长、等级、喂食洗澡、经济
 - `src/main/` — Electron 主进程:桌宠窗口、行为状态机(散步/拖拽/坠落/贴边躲藏)、托盘、右键菜单、存档
