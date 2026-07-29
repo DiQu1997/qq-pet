@@ -42,13 +42,24 @@ const STATIONS: Station[] = [
   },
   {
     gear: "🚴 动感单车", anim: "gymRun", motion: "m-pedal",
-    equip: `<div class="equip bike"><div class="wheel"></div><div class="frame"></div></div>`,
+    equip: `<div class="equip bike"><div class="seat"></div><div class="wheel"></div><div class="frame"></div></div>`,
     fx: `<span class="fx sweat">💧</span>`,
   },
   {
     gear: "🤸 跳操区", anim: "gymJump", motion: "m-jump",
     equip: `<div class="equip aerobic"><div class="pad"></div></div>`,
     fx: `<span class="fx puff">💨</span>`,
+  },
+  {
+    gear: "🥊 沙袋区", anim: "gymBox", motion: "m-box",
+    equip: `<div class="equip bagzone"><div class="pad"></div></div>`,
+    // 沙袋吊在侧面,被打时会晃
+    fx: `<div class="punchbag"><i></i></div><span class="fx sweat">💧</span>`,
+  },
+  {
+    gear: "🪢 跳绳区", anim: "gymRope", motion: "m-rope",
+    equip: `<div class="equip ropezone"><div class="pad"></div></div>`,
+    fx: `<div class="rope"></div><span class="fx sweat">💧</span>`,
   },
   {
     gear: "🛋️ 休息区", anim: "sleep", motion: "m-rest",

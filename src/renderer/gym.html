@@ -260,10 +260,20 @@
         background: linear-gradient(180deg, #6d7a86, #4c5761);
       }
       .bike .wheel {
-        position: absolute; bottom: 6px; right: 4px;
-        width: 30px; height: 30px; border-radius: 50%;
-        border: 3px solid #4c5761; border-top-color: #93a0ab;
-        animation: spin 0.5s linear infinite;
+        position: absolute; bottom: 4px; right: 2px;
+        width: 38px; height: 38px; border-radius: 50%;
+        border: 4px solid #4c5761; border-top-color: #a9b6c1;
+        animation: spin 0.45s linear infinite;
+      }
+      .bike .seat {   /* 座垫 + 车把,只有轮子看不出是单车 */
+        position: absolute; bottom: 26px; left: 6px;
+        width: 34px; height: 8px; border-radius: 4px;
+        background: linear-gradient(180deg, #56616b, #3b444d);
+      }
+      .bike .seat::after {
+        content: ""; position: absolute; right: -22px; bottom: 10px;
+        width: 6px; height: 26px; border-radius: 3px;
+        background: linear-gradient(180deg, #6d7a86, #49535c);
       }
       @keyframes spin { to { transform: rotate(360deg); } }
 
@@ -273,6 +283,45 @@
         height: 10px; border-radius: 5px;
         background: linear-gradient(180deg, #d98f5a, #b0703f);
       }
+      /* 沙袋:吊在身侧,被打中时来回晃 */
+      .bagzone, .ropezone { width: 110px; }
+      .bagzone .pad, .ropezone .pad {
+        height: 10px; border-radius: 5px;
+        background: linear-gradient(180deg, #8b96a1, #626d78);
+      }
+      .punchbag {
+        position: absolute; right: -26px; top: 14%;
+        width: 30px; height: 74px; border-radius: 14px;
+        background: linear-gradient(180deg, #c0563c, #8e3a26);
+        border: 2px solid #6d2b1c;
+        transform-origin: 50% -18px;
+        animation: bagswing 1.04s ease-in-out infinite;
+      }
+      .punchbag i {   /* 吊绳 */
+        position: absolute; left: 50%; top: -18px; width: 2px; height: 18px;
+        margin-left: -1px; background: #4a5058;
+      }
+      @keyframes bagswing {
+        0%,100% { transform: rotate(7deg); }
+        50%     { transform: rotate(-7deg); }
+      }
+      /* 跳绳:脚下一条来回摆的弧线 */
+      .rope {
+        position: absolute; left: 50%; bottom: -4px;
+        width: 96px; height: 34px; margin-left: -48px;
+        border: 3px solid #d8a24a; border-top-color: transparent;
+        border-radius: 0 0 50% 50%;
+        animation: ropespin 0.46s linear infinite;
+      }
+      @keyframes ropespin {
+        0%   { transform: scaleY(1); opacity: 1; }
+        49%  { transform: scaleY(0.15); opacity: 0.75; }
+        50%  { transform: scaleY(-0.15); opacity: 0.75; }
+        100% { transform: scaleY(-1); opacity: 1; }
+      }
+      .m-box  { animation: mRun 0.52s ease-in-out infinite; }
+      .m-rope { animation: mRun 0.46s ease-in-out infinite; }
+
       .rest { width: 116px; }
       .rest .sofa {
         height: 18px; border-radius: 7px 7px 4px 4px;

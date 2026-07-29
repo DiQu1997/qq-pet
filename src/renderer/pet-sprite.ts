@@ -139,6 +139,9 @@ export class PetSprite {
       gymLift: "dance",
       gymJump: "dance",
       gymStretch: "idle",
+      gymBox: "dance",
+      gymRope: "dance",
+      gymDodge: "walkLeft",
     };
     return fallback[name] ?? "idle";
   }

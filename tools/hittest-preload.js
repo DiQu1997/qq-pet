@@ -31,13 +31,29 @@ let uiCb = () => {};
 let peersCb = () => {};
 let roomCb = () => {};
 
+/** GYM_FILL=N 时生成 N 位成员,用来一次看全所有工位 */
+function fillMembers(n, skinId) {
+  const names = ["阿拳","铁拳","小腾","擂鼓","轻影","飞踢","硬桥","快手"];
+  return Array.from({ length: n }, (_, i) => ({
+    id: `m-${String(i).padStart(2, "0")}`, room: "gym",
+    name: names[i % names.length], level: 5 + i * 3, skinId,
+    gender: i % 2 ? "QMM" : "QGG",
+    outfit: { hat: null, scene: null }, lastSeen: Date.now(),
+  }));
+}
+
 /** 健身房假名单:一只企鹅 + 一只卡比兽,验证跨皮肤同屏 */
-let roomState = {
+let roomState = process.env.GYM_FILL ? {
+  selfId: "m-00",
+  members: fillMembers(Number(process.env.GYM_FILL), process.env.GYM_SKIN_A || "hitmonchan"),
+} : {
   selfId: "aaa-1",
   members: [
-    { id: "aaa-1", room: "gym", name: "阿尔法", level: 10, skinId: "penguin",
+    { id: "aaa-1", room: "gym", name: "阿尔法", level: 10,
+      skinId: process.env.GYM_SKIN_A || "penguin",
       gender: "QGG", outfit: { hat: "hat_crown", scene: null }, lastSeen: Date.now() },
-    { id: "bbb-2", room: "gym", name: "贝塔", level: 7, skinId: "snorlax",
+    { id: "bbb-2", room: "gym", name: "贝塔", level: 7,
+      skinId: process.env.GYM_SKIN_B || "snorlax",
       gender: "QMM", outfit: { hat: null, scene: null }, lastSeen: Date.now() },
   ],
 };

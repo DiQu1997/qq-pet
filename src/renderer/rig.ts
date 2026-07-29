@@ -171,6 +171,55 @@ export const RIG_STATES: Record<string, (t: number) => Pose> = {
     };
   },
 
+  /**
+   * 打沙袋:左右交替出直拳,出拳侧手臂前伸、身体拧转跟进。
+   * 需要手臂真的看得见才有意义 —— 卡比兽手臂被肚子挡着,这动作在它身上白做。
+   */
+  gymBox: (t) => {
+    const p = 0.52;
+    const ph = (t % (p * 2)) / (p * 2); // 一个完整左右组合
+    // 前半周期右手出拳,后半周期左手
+    const right = ph < 0.5 ? Math.sin((ph / 0.5) * Math.PI) : 0;
+    const left = ph >= 0.5 ? Math.sin(((ph - 0.5) / 0.5) * Math.PI) : 0;
+    return {
+      body: { rot: 5 * (right - left), ty: -3 * Math.max(right, left) },
+      head: { rot: 3 * (right - left) },
+      armR: { rot: 20 - 70 * right, tx: 10 * right, ty: -6 * right },
+      armL: { rot: -20 + 70 * left, tx: -10 * left, ty: -6 * left },
+      legL: { rot: -4 * left },
+      legR: { rot: 4 * right },
+    };
+  },
+
+  /** 跳绳:小幅连续起跳,双臂在体侧画小圈 */
+  gymRope: (t) => {
+    const p = 0.46;
+    const hop = Math.max(0, sin(t, p));
+    const swing = sin(t, p, 0.25);
+    return {
+      body: { ty: -14 * hop, sy: 1 + 0.03 * hop },
+      head: { ty: -3 * hop },
+      armL: { rot: -34 + 12 * swing },
+      armR: { rot: 34 - 12 * swing },
+      legL: { rot: -6 - 10 * hop },
+      legR: { rot: 6 + 10 * hop },
+    };
+  },
+
+  /** 闪避:左右晃身躲拳,重心随之换腿 */
+  gymDodge: (t) => {
+    const p = 1.1;
+    const s = sin(t, p);
+    return {
+      body: { rot: 9 * s, tx: 8 * s },
+      head: { rot: 6 * s, tx: 4 * s },
+      armL: { rot: -14 - 8 * s },
+      armR: { rot: 14 - 8 * s },
+      legL: { rot: -5 * s },
+      legR: { rot: -5 * s },
+    };
+  },
+
   /** 拉伸:缓慢左右侧倾,手臂交替上举 */
   gymStretch: (t) => {
     const p = 4.4;
@@ -211,6 +260,9 @@ export const ANIM_TO_RIG: Record<string, string> = {
   gymLift: "gymLift",
   gymJump: "gymJump",
   gymStretch: "gymStretch",
+  gymBox: "gymBox",
+  gymRope: "gymRope",
+  gymDodge: "gymDodge",
 };
 
 export class RigRenderer {

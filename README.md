@@ -165,6 +165,7 @@ npm run build && open -n "$HOME/Library/Application Support/qq-pet-runtime/Elect
 |---|---|---|
 | `penguin` | `sheet` 逐帧 | QQ 企鹅原版,55 帧精灵图,9 种动画 |
 | `snorlax` | `rig` 骨骼 | 卡比兽,矢量图切 6 部件做关节动画 + 16 种情绪立绘 |
+| `hitmonchan` | `rig` 骨骼 | 快拳郎,**四肢完全外露**,健身房动作最全(出拳/跳绳/闪避) |
 
 ### skins/&lt;id&gt;/skin.json 结构
 
@@ -213,8 +214,11 @@ npm run build && open -n "$HOME/Library/Application Support/qq-pet-runtime/Elect
   各机自行维护名单。任何人退出都不影响别人,不需要选主
 - **布局无需协商**:名单按 id 排序,序号即工位 —— 每台机器拿到同一份有序名单,
   算出的画面天然一致,不用同步坐标
-- **骨骼皮肤有真正的健身动作**:`rig.ts` 里的 `gymRun`(双脚交替蹬地+手臂反相摆)、
-  `gymLift`(深蹲下压→发力起身)、`gymJump`(开合跳)、`gymStretch`(侧倾拉伸)。
+- **骨骼皮肤有真正的健身动作**:`gymRun`(双脚交替蹬地+手臂反相摆)、`gymLift`(深蹲→起身)、
+  `gymJump`(开合跳)、`gymStretch`(侧倾拉伸)、`gymBox`(左右交替出直拳)、
+  `gymRope`(跳绳)、`gymDodge`(晃身闪避)。八个工位各配一种。
+  **动作能不能看出来,取决于素材四肢是否外露** —— 卡比兽手臂藏在肚子后面,
+  出拳类动作在它身上等于白做;快拳郎四肢完全外露,同样的动作就清清楚楚。
   精灵图皮肤(企鹅)没有健身帧,退回到语义最近的现有动画
 - 再叠器械动画(履带滚动、杠铃起落、车轮转)与汗滴特效。
   只有器械动、宠物站着不动是不够的 —— 那看起来就是在发呆

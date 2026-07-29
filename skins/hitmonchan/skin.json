@@ -1,0 +1,92 @@
+{
+  "id": "hitmonchan",
+  "displayName": "快拳郎",
+  "credit": "形象素材:PokeAPI/sprites(Dream World 矢量图)· 宝可梦为任天堂/Game Freak 版权 · 仅供个人学习怀旧",
+  "renderer": "rig",
+  "scale": 0.55,
+  "nameplateOffset": 2,
+  "terms": {
+    "species": "快拳郎",
+    "island": "拳击道场",
+    "communityTitle": "🥊 拳击道场 · 宠物社区",
+    "idleHint": "在道场里转转吧~",
+    "maleLabel": "红拳套",
+    "femaleLabel": "蓝拳套",
+    "matchmaker": "道场红娘 · 待嫁待娶",
+    "churchTitle": "道场后院小教堂",
+    "defaultName": "阿拳"
+  },
+  "rig": {
+    "file": "hitmonchan.svg",
+    "width": 216,
+    "height": 322,
+    "headFollow": 0.4,
+    "pivots": {
+      "head": [
+        98,
+        128
+      ],
+      "armL": [
+        72,
+        87
+      ],
+      "armR": [
+        128,
+        82
+      ],
+      "body": [
+        91,
+        200
+      ],
+      "legL": [
+        56,
+        196
+      ],
+      "legR": [
+        144,
+        188
+      ]
+    },
+    "children": [
+      "head",
+      "armL",
+      "armR",
+      "legL",
+      "legR"
+    ]
+  },
+  "npcs": [
+    {
+      "id": "npc_tiequan",
+      "name": "铁拳",
+      "gender": "QGG",
+      "level": 20,
+      "icon": "🥊",
+      "personality": "道场里最能打的老前辈,一天挥拳三千次"
+    },
+    {
+      "id": "npc_xiaoteng",
+      "name": "小腾",
+      "gender": "QMM",
+      "level": 14,
+      "icon": "🎽",
+      "personality": "步法灵活的新人,最爱跳绳热身"
+    },
+    {
+      "id": "npc_leigu",
+      "name": "擂鼓",
+      "gender": "QGG",
+      "level": 17,
+      "icon": "🔔",
+      "personality": "负责敲开场钟的壮汉,嗓门比钟还响"
+    },
+    {
+      "id": "npc_qingying",
+      "name": "轻影",
+      "gender": "QMM",
+      "level": 23,
+      "icon": "💨",
+      "personality": "从没被打中过一次的闪避高手"
+    }
+  ]
+}
