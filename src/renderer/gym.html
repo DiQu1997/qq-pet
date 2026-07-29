@@ -280,9 +280,15 @@
       }
 
       /* 空房间提示 */
+      /* 提示挪到墙顶做成一条横幅:原来居中会正好压在宠物身上 */
       #empty {
-        position: absolute; left: 0; right: 0; top: 22%;
-        text-align: center; color: #55636f; font-size: 13px; line-height: 1.9;
+        position: absolute; left: 50%; top: 10px; transform: translateX(-50%);
+        max-width: 74%;
+        padding: 7px 16px; border-radius: 14px;
+        background: rgba(255,255,255,0.82);
+        border: 1px solid rgba(120,140,155,0.35);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        text-align: center; color: #4a5a66; font-size: 12.5px; line-height: 1.7;
       }
       #status {
         position: absolute; left: 12px; bottom: 8px;

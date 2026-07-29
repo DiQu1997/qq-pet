@@ -121,6 +121,68 @@ export const RIG_STATES: Record<string, (t: number) => Pose> = {
     };
   },
 
+  // ===== 健身房专用动作 =====
+  // 之前健身房是"宠物原地站着 + 器械在动",完全看不出在运动。
+  // 骨骼引擎本来就能单独驱动四肢,这里写成真正的动作。
+  // 卡比兽的手臂被肚子挡住,所以**幅度主要给脚**,腿动才看得见。
+
+  /** 跑步:双脚交替抬起蹬地,手臂反相摆动,身体随步频起伏 */
+  gymRun: (t) => {
+    const p = 0.44; // 步频
+    return {
+      body: { ty: -5 * Math.abs(sin(t, p / 2)), sy: 1 + 0.02 * sin(t, p / 2) },
+      head: { ty: -2 * Math.abs(sin(t, p / 2)), rot: 2 * sin(t, p) },
+      armL: { rot: 26 * sin(t, p) },
+      armR: { rot: 26 * sin(t, p, 0.5) },
+      footL: { rot: 30 * sin(t, p), ty: -10 * cl01(sin(t, p)) },
+      footR: { rot: 30 * sin(t, p, 0.5), ty: -10 * cl01(sin(t, p, 0.5)) },
+    };
+  },
+
+  /** 举铁:深蹲下压 → 发力起身,手臂上举撑住杠铃 */
+  gymLift: (t) => {
+    const p = 1.5;
+    const ph = (t % p) / p;
+    // 0→下蹲,0.45 最低,0.7 起身冲顶,之后回位
+    const dip = ph < 0.45 ? ph / 0.45 : ph < 0.7 ? 1 - (ph - 0.45) / 0.25 : 0;
+    const push = ph >= 0.45 && ph < 0.7 ? (ph - 0.45) / 0.25 : 0;
+    return {
+      body: { ty: 14 * dip - 4 * push, sy: 1 - 0.1 * dip },
+      head: { ty: 6 * dip, rot: 0 },
+      armL: { rot: -30 - 25 * push },
+      armR: { rot: 30 + 25 * push },
+      footL: { rot: -12 * dip },
+      footR: { rot: 12 * dip },
+    };
+  },
+
+  /** 开合跳:手脚同时张开再收拢,配合起跳 */
+  gymJump: (t) => {
+    const p = 0.68;
+    const open = (1 + sin(t, p)) / 2; // 0=收拢 1=张开
+    const hop = Math.max(0, sin(t, p));
+    return {
+      body: { ty: -20 * hop, sy: 1 + 0.04 * hop },
+      head: { ty: -4 * hop },
+      armL: { rot: -20 - 55 * open },
+      armR: { rot: 20 + 55 * open },
+      footL: { rot: -8 - 26 * open },
+      footR: { rot: 8 + 26 * open },
+    };
+  },
+
+  /** 拉伸:缓慢左右侧倾,手臂交替上举 */
+  gymStretch: (t) => {
+    const p = 4.4;
+    const lean = sin(t, p);
+    return {
+      body: { rot: 4 * lean, sy: 1 + 0.02 * sin(t, p / 2) },
+      head: { rot: 6 * lean },
+      armL: { rot: -20 - 45 * cl01(lean) },
+      armR: { rot: 20 + 45 * cl01(-lean) },
+    };
+  },
+
   /** 上学:低头看书,偶尔点头 */
   study: (t) => ({
     body: { sy: 1 + 0.015 * sin(t, 3.2) },
@@ -144,6 +206,11 @@ export const ANIM_TO_RIG: Record<string, string> = {
   mail: "study",
   eat: "eat",
   dead: "idle",
+  // 健身房动作直通
+  gymRun: "gymRun",
+  gymLift: "gymLift",
+  gymJump: "gymJump",
+  gymStretch: "gymStretch",
 };
 
 export class RigRenderer {

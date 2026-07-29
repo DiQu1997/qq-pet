@@ -126,6 +126,23 @@ export class PetSprite {
     return { w: this.w, h: this.h };
   }
 
+  /**
+   * 精灵图皮肤没有健身专用帧(企鹅只有官方那 9 组动画),
+   * 退回到语义最接近的一组;骨骼皮肤则能真正做出动作。
+   */
+  private resolveSheetAnim(name: string): string {
+    const s = this.skin.sheet;
+    if (!s) return name;
+    if (s.animations[name]) return name;
+    const fallback: Record<string, string> = {
+      gymRun: "walkRight",
+      gymLift: "dance",
+      gymJump: "dance",
+      gymStretch: "idle",
+    };
+    return fallback[name] ?? "idle";
+  }
+
   setAnim(name: string): void {
     if (name === this.anim) return;
     this.anim = name;
@@ -148,7 +165,7 @@ export class PetSprite {
     }
     const s = this.skin.sheet;
     if (!s || !this.ctx || !this.img) return;
-    const def = s.animations[this.anim] ?? s.animations.idle;
+    const def = s.animations[this.resolveSheetAnim(this.anim)] ?? s.animations.idle;
     if (!def) return;
     if (!this.lastFrameAt) this.lastFrameAt = t;
     if (t - this.lastFrameAt >= 1000 / def.fps) {

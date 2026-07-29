@@ -25,28 +25,28 @@ interface Station {
 }
 const STATIONS: Station[] = [
   {
-    gear: "🏃 跑步机", anim: "walkRight", motion: "m-run",
+    gear: "🏃 跑步机", anim: "gymRun", motion: "m-run",
     equip: `<div class="equip treadmill"><div class="belt"></div><div class="base"></div>
             <div class="console"><i></i></div></div>`,
     fx: `<span class="fx sweat">💧</span><span class="fx sweat b">💧</span>`,
   },
   {
-    gear: "🏋️ 举铁区", anim: "dance", motion: "m-lift",
+    gear: "🏋️ 举铁区", anim: "gymLift", motion: "m-lift",
     equip: `<div class="equip weights"><div class="plate"></div></div>`,
     // 杠铃挂在 pet-wrap 里才能压在头顶,放器械层会从躯干穿过去
     fx: `<div class="barbell"></div><span class="fx sweat">💧</span>`,
   },
   {
-    gear: "🧘 瑜伽垫", anim: "idle", motion: "m-breathe",
+    gear: "🧘 瑜伽垫", anim: "gymStretch", motion: "m-breathe",
     equip: `<div class="equip yoga"><div class="mat"><i></i></div></div>`,
   },
   {
-    gear: "🚴 动感单车", anim: "walkLeft", motion: "m-pedal",
+    gear: "🚴 动感单车", anim: "gymRun", motion: "m-pedal",
     equip: `<div class="equip bike"><div class="wheel"></div><div class="frame"></div></div>`,
     fx: `<span class="fx sweat">💧</span>`,
   },
   {
-    gear: "🤸 跳操区", anim: "dance", motion: "m-jump",
+    gear: "🤸 跳操区", anim: "gymJump", motion: "m-jump",
     equip: `<div class="equip aerobic"><div class="pad"></div></div>`,
     fx: `<span class="fx puff">💨</span>`,
   },
