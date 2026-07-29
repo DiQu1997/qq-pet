@@ -20,6 +20,7 @@ await esbuild.build({
     "src/renderer/community.ts",
     "src/renderer/battle.ts",
     "src/renderer/maze.ts",
+    "src/renderer/gym.ts",
   ],
   outdir: "dist",
   bundle: true,
@@ -31,6 +32,7 @@ cpSync("src/renderer/index.html", "dist/index.html");
 cpSync("src/renderer/community.html", "dist/community.html");
 cpSync("src/renderer/battle.html", "dist/battle.html");
 cpSync("src/renderer/maze.html", "dist/maze.html");
+cpSync("src/renderer/gym.html", "dist/gym.html");
 cpSync("skins", "dist/skins", { recursive: true });
 cpSync("config.json", "dist/config.json");
 console.log("build ok");

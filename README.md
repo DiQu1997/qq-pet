@@ -206,6 +206,16 @@ npm run build && open -n "$HOME/Library/Application Support/qq-pet-runtime/Elect
 - 一次只招待一位客人,已有客人时会回「家里已经有客人「XX」了」
 - 对方不在线 / 连不上,一律回「对方不在家」
 
+**局域网健身房(实验中)**:社区窗口 → 🎮 游乐场 → 「去健身房」。
+同一个 Wi-Fi 下进了健身房的宝贝会**同屏出现**,各自在跑步机/举铁区/瑜伽垫上活动。
+
+- **全分布式,没有房主**:每个成员每 1.2 秒组播一次"我在哪个房间 + 长什么样",
+  各机自行维护名单。任何人退出都不影响别人,不需要选主
+- **布局无需协商**:名单按 id 排序,序号即工位 —— 每台机器拿到同一份有序名单,
+  算出的画面天然一致,不用同步坐标
+- 目前只做**渲染验证**,还没有健身奖励数值
+- 最多同屏 6 位,超出只显示前 6
+
 **已知限制**
 
 - 首次开启 macOS 会弹防火墙授权框,要选允许
@@ -218,7 +228,8 @@ npm run build && open -n "$HOME/Library/Application Support/qq-pet-runtime/Elect
 **本机双开测试**:单实例锁是按 userData 路径判定的,换个目录就能开第二个实例:
 
 ```bash
-QQPET_USER_DATA=/tmp/qqpet-B npm start
+QQPET_USER_DATA=/tmp/qqpet-B npm start          # 换存档目录 = 绕过单实例锁
+QQPET_USER_DATA=/tmp/qqpet-B QQPET_AUTO_GYM=1 npm start   # 启动后自动进健身房
 ```
 
 ## 架构
@@ -231,7 +242,9 @@ QQPET_USER_DATA=/tmp/qqpet-B npm start
 - `src/renderer/rig.ts` — 骨骼动画引擎(父子层级 + 体积守恒),rig 类皮肤共用
 - 鼠标穿透:桌宠窗口(220×300)比宠物本身大,默认 `setIgnoreMouseEvents(true, {forward:true})`
   让透明区不挡下层应用;渲染层靠 mousemove 判断光标是否压在宠物上,再通知主进程临时恢复可交互
-- `src/main/lan.ts` — 局域网:UDP 组播发现 + HTTP 点对点(零新依赖)
+- `src/main/lan.ts` — 局域网:UDP 组播发现 + HTTP 点对点 + 共享房间(零新依赖)
+- `src/renderer/pet-sprite.ts` — 可实例化的宠物精灵(sheet/rig 两种后端),
+  健身房靠它同屏画 N 只、每只用自己的皮肤
 - 单实例:`app.requestSingleInstanceLock()`。重复 `npm start` 时第二个实例直接退出,
   否则两个实例会同时 tick 并每 15 秒抢写同一个 `save.json`,后写的覆盖先写的 → 进度丢失
 - 存档:`~/Library/Application Support/qq-pet/save.json`;退出期间不成长也不会死(与原版一致)

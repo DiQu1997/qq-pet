@@ -29,6 +29,18 @@ let bubbleCb = () => {};
 let gotoCb = () => {};
 let uiCb = () => {};
 let peersCb = () => {};
+let roomCb = () => {};
+
+/** 健身房假名单:一只企鹅 + 一只卡比兽,验证跨皮肤同屏 */
+let roomState = {
+  selfId: "aaa-1",
+  members: [
+    { id: "aaa-1", room: "gym", name: "阿尔法", level: 10, skinId: "penguin",
+      gender: "QGG", outfit: { hat: "hat_crown", scene: null }, lastSeen: Date.now() },
+    { id: "bbb-2", room: "gym", name: "贝塔", level: 7, skinId: "snorlax",
+      gender: "QMM", outfit: { hat: null, scene: null }, lastSeen: Date.now() },
+  ],
+};
 
 /** 局域网假状态,测试里可用 __drive.lan() 替换 */
 let lanState = {
@@ -102,6 +114,12 @@ contextBridge.exposeInMainWorld("qqpet", {
     return { ok: true, message: "出发去串门啦" };
   },
   onPeers(cb) { peersCb = cb; },
+  // —— 健身房(测试用假名单)——
+  openGym() {},
+  async gymJoin() { return { selfId: roomState.selfId, members: roomState.members }; },
+  async gymRoster() { return { members: roomState.members }; },
+  gymLeave() {},
+  onRoom(cb) { roomCb = cb; },
   closeWindow() {},
   openGame() {},
 });
@@ -119,4 +137,5 @@ contextBridge.exposeInMainWorld("__drive", {
   bubble: (t) => bubbleCb(t),
   ui: (p) => uiCb(p),
   lan: (patch) => { lanState = { ...lanState, ...patch }; peersCb(lanState.peers); },
+  room: (members) => { roomState = { ...roomState, members }; roomCb(members); },
 });

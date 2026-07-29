@@ -1,0 +1,113 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      * { box-sizing: border-box; }
+      html, body {
+        margin: 0; height: 100%; overflow: hidden;
+        font-family: "PingFang SC", sans-serif;
+        user-select: none; -webkit-user-select: none;
+        color: #2f3a45;
+      }
+      .titlebar {
+        -webkit-app-region: drag;
+        height: 44px;
+        display: flex; align-items: center; justify-content: space-between;
+        padding: 0 12px 0 16px;
+        color: #fff; font-size: 15px; font-weight: 700;
+        background: linear-gradient(180deg, #57c8e0 0%, #33a8c8 55%, #2189a8 100%);
+        border-bottom: 2px solid #1a7089;
+        text-shadow: 0 1px 2px rgba(0,0,0,0.25);
+      }
+      .titlebar button {
+        -webkit-app-region: no-drag;
+        width: 26px; height: 26px;
+        border: 2px solid rgba(255,255,255,0.55);
+        border-radius: 50%;
+        background: rgba(255,255,255,0.2);
+        color: #fff; font-size: 15px; line-height: 1; cursor: pointer;
+      }
+
+      /* ---- 健身房场景 ---- */
+      #room {
+        position: relative;
+        height: calc(100vh - 44px);
+        /* 墙面 + 地板 */
+        background:
+          linear-gradient(180deg, #dff1f7 0%, #cfe8f2 62%, #cfe8f2 62%, #b9d8e6 62.5%, #a8cadb 100%);
+        overflow: hidden;
+      }
+      /* 墙上的窗户与挂钟 */
+      .decor { position: absolute; pointer-events: none; }
+      .window-pane {
+        top: 22px; width: 92px; height: 62px;
+        background: linear-gradient(160deg, #eaf7ff 0%, #bfe3f5 100%);
+        border: 4px solid #fff; border-radius: 6px;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+      }
+      .clock { top: 26px; left: 50%; transform: translateX(-50%); font-size: 30px; }
+      /* 地板横线,给一点纵深 */
+      .floor-line {
+        position: absolute; left: 0; right: 0;
+        height: 2px; background: rgba(255,255,255,0.55);
+      }
+      /* 工位 = 名牌 + 宠物 + 垫子 + 器械名,整体一个纵向流。
+         之前宠物和器械分属两个绝对定位层,永远对不齐、还会被窗口底部截断 */
+      #slots { position: absolute; left: 0; right: 0; bottom: 26px; height: 1px; }
+      .slot {
+        position: absolute; bottom: 0;
+        display: flex; flex-direction: column; align-items: center;
+        transform: translateX(-50%);
+      }
+      .slot .mat {
+        width: 104px; height: 11px; border-radius: 6px; margin-top: 2px;
+        background: linear-gradient(180deg, #7fb8cc, #5d97ac);
+        box-shadow: 0 2px 0 rgba(0,0,0,0.12);
+      }
+      .slot .label {
+        margin-top: 4px; font-size: 11px; color: #4d6675;
+        letter-spacing: 0.5px; white-space: nowrap;
+      }
+      .pet-sprite .ps-name {
+        margin-bottom: 4px;
+        padding: 2px 9px; border-radius: 11px;
+        background: rgba(40, 58, 68, 0.78);
+        color: #fff; font-size: 11.5px; font-weight: 700;
+        white-space: nowrap;
+        text-shadow: 0 1px 2px rgba(0,0,0,0.45);
+      }
+      .slot.me .ps-name { background: #e8794a; }
+      .slot.me .ps-name::after { content: " (我)"; opacity: 0.85; font-weight: 400; }
+
+      /* 空房间提示 */
+      #empty {
+        position: absolute; left: 0; right: 0; top: 46%;
+        text-align: center; color: #6d8695; font-size: 13px; line-height: 1.9;
+      }
+      #status {
+        position: absolute; left: 12px; bottom: 8px;
+        font-size: 11.5px; color: #5e7887;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="titlebar">
+      <span>🏋️ 局域网健身房</span>
+      <button id="close">×</button>
+    </div>
+    <div id="room">
+      <div class="decor window-pane" style="left: 40px"></div>
+      <div class="decor window-pane" style="right: 40px"></div>
+      <div class="decor clock">🕐</div>
+      <div class="floor-line" style="bottom: 22px"></div>
+      <div id="slots"></div>
+      <div id="empty">
+        健身房里还没有别人……<br />
+        让另一台也点「去健身房」,同一个 Wi-Fi 下会自动碰面
+      </div>
+      <div id="status"></div>
+    </div>
+    <script src="gym.js"></script>
+  </body>
+</html>

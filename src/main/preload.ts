@@ -30,4 +30,10 @@ contextBridge.exposeInMainWorld("qqpet", {
     ipcRenderer.on("peers", (_e, peers) => cb(peers)),
   closeWindow: () => ipcRenderer.send("close-window"),
   openGame: (page: string) => ipcRenderer.send("open-game", page),
+  openGym: () => ipcRenderer.send("open-gym"),
+  gymJoin: () => ipcRenderer.invoke("gym-join"),
+  gymRoster: () => ipcRenderer.invoke("gym-roster"),
+  gymLeave: () => ipcRenderer.send("gym-leave"),
+  onRoom: (cb: (members: any[]) => void) =>
+    ipcRenderer.on("room", (_e, members) => cb(members)),
 });

@@ -18,6 +18,9 @@ import { networkInterfaces } from "node:os";
 const GROUP = "239.255.42.99";
 const DISCOVERY_PORT = 41999;
 const BEACON_MS = 5000;
+/** 房间心跳更密:成员进出要快速反映到画面上 */
+const ROOM_BEACON_MS = 1200;
+const ROOM_TTL_MS = 4000;
 /** 超过这个时间没再听到心跳,就认为对方下线了 */
 export const PEER_TTL_MS = 16000;
 const PROTOCOL = 1;
@@ -39,6 +42,18 @@ export interface Peer extends PeerCard {
   lastSeen: number;
 }
 
+/** 房间成员:进了共享房间(如健身房)的宠物,每 ROOM_BEACON_MS 广播一次 */
+export interface RoomMember {
+  id: string;
+  room: string;
+  name: string;
+  level: number;
+  skinId: string;
+  gender: "QGG" | "QMM";
+  outfit: { hat: string | null; scene: string | null };
+  lastSeen: number;
+}
+
 export interface LanOptions {
   /** 本机稳定标识,换名字也不变 */
   selfId: string;
@@ -50,6 +65,10 @@ export interface LanOptions {
   onVisitRequest?: (from: Peer, payload: any) => { ok: boolean; message: string };
   /** 客人提前告辞 */
   onVisitEnd?: (peerId: string) => void;
+  /** 取自己在房间里的展示信息(名字/等级/皮肤/装扮) */
+  getRoomCard?: () => Omit<RoomMember, "id" | "room" | "lastSeen">;
+  /** 房间人员变化 */
+  onRoomChanged?: (room: string, members: RoomMember[]) => void;
   log: (msg: string) => void;
 }
 
@@ -87,6 +106,10 @@ export class LanNode {
   private localIp: string | null = null;
   private beaconsSent = 0;
   private lastBeaconError: string | null = null;
+  /** 当前所在共享房间(null = 不在任何房间) */
+  private room: string | null = null;
+  private roomBeacon: NodeJS.Timeout | null = null;
+  private roomMembers = new Map<string, RoomMember>();
 
   constructor(private opts: LanOptions) {}
 
@@ -104,6 +127,79 @@ export class LanNode {
   }
   find(id: string): Peer | undefined {
     return this.list().find((p) => p.id === id);
+  }
+
+  // ---------- 共享房间 ----------
+  /**
+   * 进入共享房间。房间是**全分布式**的:没有房主,每个成员每秒广播一次
+   * "我在哪个房间 + 我长什么样",所有人各自维护同一份名单。
+   * 任何人退出都不影响别人,也不需要选主。
+   */
+  joinRoom(room: string): void {
+    if (this.room === room) return;
+    this.room = room;
+    this.roomMembers.clear();
+    this.sendRoomBeacon();
+    if (this.roomBeacon) clearInterval(this.roomBeacon);
+    this.roomBeacon = setInterval(() => this.sendRoomBeacon(), ROOM_BEACON_MS);
+    this.opts.log(`进入房间:${room}`);
+    this.opts.onRoomChanged?.(room, this.roster());
+  }
+
+  leaveRoom(): void {
+    if (!this.room) return;
+    const was = this.room;
+    this.room = null;
+    if (this.roomBeacon) clearInterval(this.roomBeacon), (this.roomBeacon = null);
+    this.roomMembers.clear();
+    this.opts.log(`离开房间:${was}`);
+    this.opts.onRoomChanged?.(was, []);
+  }
+
+  get currentRoom(): string | null {
+    return this.room;
+  }
+
+  /**
+   * 房间名单(含自己),按 id 排序。
+   * 排序是关键:每台机器都用同一份有序名单算工位,布局天然一致,不用协商。
+   */
+  roster(): RoomMember[] {
+    if (!this.room) return [];
+    const now = Date.now();
+    const self: RoomMember | null = this.opts.getRoomCard
+      ? { id: this.opts.selfId, room: this.room, lastSeen: now, ...this.opts.getRoomCard() }
+      : null;
+    const others = [...this.roomMembers.values()].filter(
+      (m) => m.room === this.room && now - m.lastSeen < ROOM_TTL_MS,
+    );
+    return [...(self ? [self] : []), ...others].sort((a, b) => a.id.localeCompare(b.id));
+  }
+
+  private sendRoomBeacon(): void {
+    if (!this.sock || !this.room || !this.opts.getRoomCard) return;
+    const msg = {
+      v: PROTOCOL,
+      k: "room",
+      id: this.opts.selfId,
+      room: this.room,
+      ...this.opts.getRoomCard(),
+    };
+    const buf = Buffer.from(JSON.stringify(msg));
+    this.sock.send(buf, 0, buf.length, DISCOVERY_PORT, GROUP, () => {
+      /* 房间心跳失败不单独报错,名片心跳已经在报了 */
+    });
+    // 顺手清理过期成员
+    const now = Date.now();
+    let changed = false;
+    for (const [id, m] of this.roomMembers) {
+      if (now - m.lastSeen >= ROOM_TTL_MS) {
+        this.roomMembers.delete(id);
+        changed = true;
+        this.opts.log(`房间成员离开:${m.name}`);
+      }
+    }
+    if (changed) this.opts.onRoomChanged?.(this.room, this.roster());
   }
 
   /** 诊断信息,给界面显示,方便自查"为什么看不到邻居" */
@@ -136,6 +232,9 @@ export class LanNode {
   async stop(): Promise<void> {
     if (this.beacon) clearInterval(this.beacon), (this.beacon = null);
     if (this.sweeper) clearInterval(this.sweeper), (this.sweeper = null);
+    if (this.roomBeacon) clearInterval(this.roomBeacon), (this.roomBeacon = null);
+    this.room = null;
+    this.roomMembers.clear();
     try {
       this.sock?.close();
     } catch {
@@ -240,6 +339,19 @@ export class LanNode {
       }
       if (card?.v !== PROTOCOL || !card.id) return;
       if (card.id === this.opts.selfId) return; // 自己的心跳(开了 loopback 会收到)
+
+      // 房间心跳走另一条路径:只在自己也在同一个房间时才关心
+      if ((card as any).k === "room") {
+        const m = card as unknown as RoomMember;
+        if (!this.room || m.room !== this.room) return;
+        const isNew = !this.roomMembers.has(m.id);
+        this.roomMembers.set(m.id, { ...m, lastSeen: Date.now() });
+        if (isNew) {
+          this.opts.log(`房间来人:${m.name}(${m.room})`);
+          this.opts.onRoomChanged?.(this.room, this.roster());
+        }
+        return;
+      }
       const before = this.peers.has(card.id);
       this.peers.set(card.id, { ...card, host: rinfo.address, lastSeen: Date.now() });
       if (!before) {

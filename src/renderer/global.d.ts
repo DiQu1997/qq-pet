@@ -21,6 +21,11 @@ interface QQPetBridge {
   onPeers(cb: (peers: any[]) => void): void;
   closeWindow(): void;
   openGame(page: string): void;
+  openGym(): void;
+  gymJoin(): Promise<{ selfId: string; members: any[] }>;
+  gymRoster(): Promise<{ members: any[] }>;
+  gymLeave(): void;
+  onRoom(cb: (members: any[]) => void): void;
 }
 
 interface Window {

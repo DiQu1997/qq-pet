@@ -25,6 +25,7 @@ const PET_W = 192;
 let petWin: BrowserWindow | null = null;
 let communityWin: BrowserWindow | null = null;
 let gameWin: BrowserWindow | null = null;
+let gymWin: BrowserWindow | null = null;
 let tray: Tray | null = null;
 let engine: PetEngine;
 
@@ -186,6 +187,17 @@ async function startLan(): Promise<void> {
     },
     onVisitEnd: (peerId) => {
       if (guest && guest.id === peerId) endGuestVisit("提前回家了");
+    },
+    getRoomCard: () => ({
+      name: engine.state.name,
+      level: engine.level,
+      skinId: skin.id,
+      gender: engine.state.gender,
+      outfit: engine.state.outfit,
+    }),
+    onRoomChanged: (room, members) => {
+      logLine(`房间「${room}」现有 ${members.length} 位:${members.map((m) => m.name).join("、")}`);
+      if (alive(gymWin)) gymWin.webContents.send("room", members);
     },
     log: logLine,
   });
@@ -564,6 +576,40 @@ function openCommunity(tab?: string): void {
     if (tab) communityWin?.webContents.send("goto-tab", tab);
   });
   communityWin.on("closed", () => (communityWin = null));
+}
+
+/** 局域网健身房:共享房间,同屏显示所有在场宠物 */
+function openGym(): void {
+  if (!lan?.isRunning) {
+    bubble("先在右键菜单里打开「局域网邻居」");
+    return;
+  }
+  if (alive(gymWin)) {
+    gymWin.show();
+    gymWin.focus();
+    return;
+  }
+  const wa = workArea();
+  gymWin = new BrowserWindow({
+    width: 780,
+    height: 420,
+    x: wa.x + Math.round((wa.width - 780) / 2),
+    y: wa.y + Math.round((wa.height - 420) / 2),
+    frame: false,
+    resizable: true,
+    minWidth: 520,
+    minHeight: 360,
+    webPreferences: { preload: join(__dirname, "preload.js") },
+  });
+  gymWin.setVisibleOnAllWorkspaces(true, {
+    visibleOnFullScreen: true,
+    skipTransformProcessType: true,
+  });
+  gymWin.loadFile(join(__dirname, "gym.html"));
+  gymWin.on("closed", () => {
+    gymWin = null;
+    lan?.leaveRoom();
+  });
 }
 
 function openGame(page: "battle" | "maze"): void {
@@ -1092,6 +1138,13 @@ ipcMain.handle("peer-card", async (_e, id: string) => {
 });
 ipcMain.on("close-window", (e) => BrowserWindow.fromWebContents(e.sender)?.close());
 ipcMain.on("open-game", (_e, page: "battle" | "maze") => openGame(page));
+ipcMain.on("open-gym", () => openGym());
+ipcMain.handle("gym-join", () => {
+  lan?.joinRoom("gym");
+  return { selfId: selfId(), members: lan?.roster() ?? [] };
+});
+ipcMain.handle("gym-roster", () => ({ members: lan?.roster() ?? [] }));
+ipcMain.on("gym-leave", () => lan?.leaveRoom());
 
 // ---------- 启动 ----------
 // 单实例锁:两个实例会同时 tick、同时写 save.json,后写的覆盖先写的 → 进度丢失。
@@ -1174,6 +1227,8 @@ function main(): void {
     createTray();
     scheduleBehavior();
     if (lanEnabled()) startLan();
+    // 开发用:QQPET_AUTO_GYM=1 启动后自动进健身房,方便多实例联调
+    if (process.env.QQPET_AUTO_GYM) setTimeout(() => openGym(), 3000);
 
     const TICK_SEC = 15;
     setInterval(() => {

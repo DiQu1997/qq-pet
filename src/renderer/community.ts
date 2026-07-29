@@ -690,6 +690,21 @@ function renderGames(): string {
       state: mLeft > 0 ? "normal" : "locked",
     })}
   </div>
+  ${section("📡", "局域网")}
+  <div class="grid">
+    ${card({
+      icon: "🏋️",
+      title: "局域网健身房",
+      tags: [tag("多人同屏")],
+      desc: "同一个 Wi-Fi 下的宝贝会一起出现在健身房里各练各的,能看到彼此",
+      req: lanInfo.running ? undefined : "需要先开启「局域网邻居」",
+      reqWarn: !lanInfo.running,
+      action: lanInfo.running
+        ? btn("去健身房", "window.qqpet.openGym()", { gold: true })
+        : btnOff("去健身房"),
+      state: lanInfo.running ? "normal" : "locked",
+    })}
+  </div>
   ${section("🏆", "Boss 图鉴")}
   <div class="grid">${castle.bosses
     .map((b: any, i: number) =>
