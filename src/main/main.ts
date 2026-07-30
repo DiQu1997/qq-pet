@@ -591,10 +591,10 @@ function openGym(): void {
   }
   const wa = workArea();
   gymWin = new BrowserWindow({
-    width: 920,
-    height: 560,
-    x: wa.x + Math.round((wa.width - 920) / 2),
-    y: wa.y + Math.round((wa.height - 560) / 2),
+    width: 1160,
+    height: 680,
+    x: wa.x + Math.round((wa.width - 1160) / 2),
+    y: wa.y + Math.round((wa.height - 680) / 2),
     frame: false,
     resizable: false,
     webPreferences: { preload: join(__dirname, "preload.js") },
