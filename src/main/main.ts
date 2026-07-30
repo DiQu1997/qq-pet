@@ -591,14 +591,12 @@ function openGym(): void {
   }
   const wa = workArea();
   gymWin = new BrowserWindow({
-    width: 780,
-    height: 420,
-    x: wa.x + Math.round((wa.width - 780) / 2),
-    y: wa.y + Math.round((wa.height - 420) / 2),
+    width: 920,
+    height: 560,
+    x: wa.x + Math.round((wa.width - 920) / 2),
+    y: wa.y + Math.round((wa.height - 560) / 2),
     frame: false,
-    resizable: true,
-    minWidth: 520,
-    minHeight: 360,
+    resizable: false,
     webPreferences: { preload: join(__dirname, "preload.js") },
   });
   gymWin.setVisibleOnAllWorkspaces(true, {

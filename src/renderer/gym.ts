@@ -136,6 +136,8 @@ async function syncRoster(members: any[]): Promise<void> {
       wrap.appendChild(sprite.el);
       if (station.fx) wrap.insertAdjacentHTML("beforeend", station.fx);
       el.appendChild(wrap);
+      // 接地阴影:放在弹跳层(pet-wrap)外面,宠物跳起来时影子留在地上
+      el.insertAdjacentHTML("beforeend", '<div class="shadow"></div>');
       // 器械与器械名跟宠物同属一个纵向流,天然对齐
       el.insertAdjacentHTML("beforeend", station.equip);
       const label = document.createElement("div");
