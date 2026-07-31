@@ -241,7 +241,9 @@ export class PetEngine {
         events.push(...this.finishTravel(now));
       }
     } else if (act.type === "visiting") {
-      if (act.minutes >= act.plannedMinutes) {
+      // 按墙上时钟结束,与主人家的客人窗口(setTimeout)对齐;
+      // 若按在线分钟计,app 重启会冻结进度,出现"永远在串门"
+      if (this.visitOverdue(now)) {
         events.push(this.finishVisit());
       }
     }
@@ -564,7 +566,7 @@ export class PetEngine {
 
   // ---------- 局域网串门 ----------
   /** 出门去邻居家。时长由调用方给,到点自动回来 */
-  startVisit(peerId: string, peerName: string, minutes: number): ActionResult {
+  startVisit(peerId: string, peerName: string, minutes: number, now: number): ActionResult {
     const dead = this.guardAlive();
     if (dead) return dead;
     if (this.state.sickness) return { ok: false, message: "宝贝生着病,不方便去串门" };
@@ -576,8 +578,17 @@ export class PetEngine {
       minutes: 0,
       plannedMinutes: minutes,
       unpaidMinutes: 0,
+      startedAtMs: now,
     };
     return { ok: true, message: `出发去「${peerName}」家串门啦,${minutes} 分钟后回来` };
+  }
+
+  /** 串门是否已到点(墙上时钟)。老存档没有 startedAtMs 的一律视为到点 */
+  visitOverdue(now: number): boolean {
+    const act = this.state.activity;
+    if (act.type !== "visiting") return false;
+    if (!act.startedAtMs) return true;
+    return now - act.startedAtMs >= act.plannedMinutes * 60_000;
   }
 
   /** 到点(或被提前叫回)结束串门 */
@@ -870,7 +881,10 @@ export class PetEngine {
     } else if (act.type === "travel") {
       activityLabel = `旅游中(${Math.round(act.plannedMinutes - act.minutes)} 分钟后回来)`;
     } else if (act.type === "visiting") {
-      activityLabel = `在「${act.refName || "邻居"}」家串门(${Math.round(act.plannedMinutes - act.minutes)} 分钟后回来)`;
+      // 剩余时间按墙上时钟算,与结束判定一致
+      const remainMs = (act.startedAtMs ?? 0) + act.plannedMinutes * 60_000 - now;
+      const remain = Math.max(0, Math.ceil(remainMs / 60_000));
+      activityLabel = `在「${act.refName || "邻居"}」家串门(${remain} 分钟后回来)`;
     }
     return {
       state: JSON.parse(JSON.stringify(this.state)),

@@ -538,7 +538,10 @@ function createPetWindow(): void {
   petWin.webContents.on("did-finish-load", () => {
     pushUiPrefs();
     pushSnapshot();
-    if (!engine.state.dead) {
+    if (engine.state.activity.type === "visiting") {
+      // 串门还没到点(重启后恢复):宝贝不在家,窗口保持隐藏,到点由 tick 叫回来
+      petWin?.hide();
+    } else if (!engine.state.dead) {
       anim("sing");
       bubble(randomOf(engine.config.bubbles.greet));
       setTimeout(() => anim(idleAnim()), 2500);
@@ -1110,7 +1113,7 @@ ipcMain.handle("visit-start", async (_e, id: string, minutes: number) => {
   }
   if (!res.body?.ok) return { ok: false, message: res.body?.message ?? "对方拒绝了" };
 
-  const r = engine.startVisit(p.id, p.name, m);
+  const r = engine.startVisit(p.id, p.name, m, Date.now());
   if (!r.ok) return r;
   visitingPeerId = p.id;
   anim("walkRight");
@@ -1220,6 +1223,14 @@ function main(): void {
     if (process.platform === "darwin") app.dock?.hide();
     const config = loadConfig();
     engine = new PetEngine(config, loadOrAdopt(config));
+
+    // 启动时结清过期串门:串门按墙上时钟计,重启期间早该回家的立即回家
+    //(老存档没有 startedAtMs 的一律视为到点,避免"永远在串门")
+    if (engine.state.activity.type === "visiting" && engine.visitOverdue(Date.now())) {
+      const msg = engine.finishVisit();
+      logLine(`启动时结清过期串门:${msg}`);
+      save();
+    }
 
     createPetWindow();
     createTray();

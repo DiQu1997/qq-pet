@@ -421,22 +421,43 @@ describe("M7 装扮与粉钻", () => {
 });
 
 describe("局域网串门", () => {
-  it("出门后进入 visiting,到点自动回来并带伴手礼", () => {
+  it("串门按墙上时钟结束:时间没到不回家,到点自动回家并带伴手礼", () => {
     const e = fresh(() => 0.5);
-    const r = e.startVisit("peer1", "贝塔", 10);
+    const r = e.startVisit("peer1", "贝塔", 10, NOW);
     expect(r.ok).toBe(true);
     expect(e.isVisiting()).toBe(true);
+    // 在线狂 tick 但墙上时间没走 → 不回家(计时以墙上时钟为准)
+    e.tick(30, NOW + 5 * 60_000);
+    expect(e.isVisiting()).toBe(true);
     const y0 = e.state.yuanbao;
-    const events = e.tick(10, NOW);
+    const events = e.tick(1, NOW + 10 * 60_000 + 1000);
     expect(e.state.activity.type).toBe("none");
     expect(events.some((x) => x.includes("贝塔") && x.includes("回来"))).toBe(true);
     expect(e.state.yuanbao).toBeGreaterThan(y0); // 伴手礼
   });
 
+  it("重启后早已到点的串门:第一个 tick 立即回家", () => {
+    const e = fresh(() => 0.5);
+    e.startVisit("peer1", "贝塔", 10, NOW);
+    // 模拟 app 关了一小时后重启:墙上时间早过了
+    const events = e.tick(0.25, NOW + 60 * 60_000);
+    expect(e.state.activity.type).toBe("none");
+    expect(events.some((x) => x.includes("回来"))).toBe(true);
+  });
+
+  it("老存档没有 startedAtMs:一律视为到点", () => {
+    const e = fresh();
+    e.state.activity = {
+      type: "visiting", refId: "p", refName: "贝塔",
+      minutes: 0, plannedMinutes: 10, unpaidMinutes: 0,
+    };
+    expect(e.visitOverdue(NOW)).toBe(true);
+  });
+
   it("串门期间心情上涨(与旅游同档)", () => {
     const e = fresh();
     e.state.mood = 500;
-    e.startVisit("peer1", "贝塔", 30);
+    e.startVisit("peer1", "贝塔", 30, NOW);
     e.tick(10, NOW);
     expect(e.state.mood).toBeGreaterThan(500);
   });
@@ -444,15 +465,15 @@ describe("局域网串门", () => {
   it("生病、忙碌、死亡时不能出门", () => {
     const sick = fresh();
     sick.state.sickness = { chain: "cold", stage: 1, minutes: 0, diagnosed: false };
-    expect(sick.startVisit("p", "贝塔", 10).ok).toBe(false);
+    expect(sick.startVisit("p", "贝塔", 10, NOW).ok).toBe(false);
 
     const busy = fresh();
     busy.startWork("banzhuan");
-    expect(busy.startVisit("p", "贝塔", 10).ok).toBe(false);
+    expect(busy.startVisit("p", "贝塔", 10, NOW).ok).toBe(false);
 
     const dead = fresh();
     dead.state.dead = true;
-    expect(dead.startVisit("p", "贝塔", 10).ok).toBe(false);
+    expect(dead.startVisit("p", "贝塔", 10, NOW).ok).toBe(false);
   });
 
   it("家里来客人,主人家宝贝心情上涨", () => {

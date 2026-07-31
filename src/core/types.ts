@@ -220,6 +220,12 @@ export interface Activity {
   minutes: number;
   /** travel 用:计划总分钟数 */
   plannedMinutes: number;
+  /**
+   * visiting 用:出发时的墙上时间。串门必须按墙上时钟结束 ——
+   * 主人家的客人窗口是 setTimeout(墙上时钟),访客若按"在线分钟"计时,
+   * app 一重启进度就冻结,会出现"对方家客人早走了,自己却永远在串门"。
+   */
+  startedAtMs?: number;
   /** work 用:未结算的工资分钟数 */
   unpaidMinutes: number;
 }
