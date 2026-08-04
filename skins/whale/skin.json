@@ -1,0 +1,68 @@
+{
+  "id": "whale",
+  "displayName": "座头鲸",
+  "credit": "形象:codex imagegen 生成参考图 + 手工矢量临摹,原创绘制,无第三方版权素材",
+  "renderer": "rig",
+  "scale": 0.5,
+  "nameplateOffset": 2,
+  "terms": {
+    "species": "座头鲸",
+    "island": "深海湾",
+    "communityTitle": "🌊 深海湾 · 宠物社区",
+    "idleHint": "在深海湾里游一游吧~",
+    "maleLabel": "鲸哥哥",
+    "femaleLabel": "鲸妹妹",
+    "matchmaker": "海湾红娘 · 待嫁待娶",
+    "churchTitle": "珊瑚礁小教堂",
+    "defaultName": "鲸宝"
+  },
+  "rig": {
+    "file": "whale.svg",
+    "width": 260,
+    "height": 348,
+    "headFollow": 0.3,
+    "pivots": {
+      "head": [130, 195],
+      "armL": [54, 200],
+      "armR": [206, 200],
+      "body": [130, 342],
+      "footL": [130, 298],
+      "footR": [130, 298]
+    },
+    "children": ["head", "armL", "armR", "footL", "footR"]
+  },
+  "npcs": [
+    {
+      "id": "npc_paopao",
+      "name": "泡泡",
+      "gender": "QMM",
+      "level": 12,
+      "icon": "🫧",
+      "personality": "吐的泡泡比谁都圆的小姑娘,一激动就咕嘟咕嘟"
+    },
+    {
+      "id": "npc_shenlan",
+      "name": "深蓝",
+      "gender": "QGG",
+      "level": 20,
+      "icon": "🌊",
+      "personality": "深海湾最稳重的老大哥,一个猛子能扎到海底"
+    },
+    {
+      "id": "npc_xiaoxiami",
+      "name": "小虾米",
+      "gender": "QGG",
+      "level": 9,
+      "icon": "🦐",
+      "personality": "跟在大家尾巴后面的小不点,梦想长成大鲸鱼"
+    },
+    {
+      "id": "npc_yueling",
+      "name": "月凌",
+      "gender": "QMM",
+      "level": 18,
+      "icon": "🌙",
+      "personality": "只在月圆夜浮上海面唱歌的神秘歌手"
+    }
+  ]
+}
