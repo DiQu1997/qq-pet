@@ -1,9 +1,9 @@
 {
   "id": "whale",
   "displayName": "座头鲸",
-  "credit": "形象:codex imagegen 生成参考图 + 手工矢量临摹,原创绘制,无第三方版权素材",
+  "credit": "形象:codex imagegen 生成 + 分部件编辑拆分(位图部件),原创,无第三方版权素材",
   "renderer": "rig",
-  "scale": 0.5,
+  "scale": 0.115,
   "nameplateOffset": 2,
   "terms": {
     "species": "座头鲸",
@@ -18,18 +18,16 @@
   },
   "rig": {
     "file": "whale.svg",
-    "width": 260,
-    "height": 348,
+    "width": 1024,
+    "height": 1536,
     "headFollow": 0.3,
     "pivots": {
-      "head": [130, 195],
-      "armL": [54, 200],
-      "armR": [206, 200],
-      "body": [130, 342],
-      "footL": [130, 298],
-      "footR": [130, 298]
+      "armL": [295, 740],
+      "armR": [725, 740],
+      "body": [512, 1380],
+      "footL": [510, 1230]
     },
-    "children": ["head", "armL", "armR", "footL", "footR"]
+    "children": ["armL", "armR", "footL"]
   },
   "npcs": [
     {
